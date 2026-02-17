@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- KeyTag Dark Background -->
+    <color name="kt_background">#121212</color>
 </resources>

@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MediaMark"
+rootProject.name = "KeyTag"
 include(":app")

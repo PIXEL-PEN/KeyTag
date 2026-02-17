@@ -1,4 +1,4 @@
-package pixelpen.mediamark;
+package pixelpen.keytag;
 
 import android.os.Bundle;
 import android.net.Uri;
@@ -13,6 +13,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.appcompat.app.AppCompatDelegate;
+
+
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -21,14 +24,23 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recyclerView);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         adapter = new ImageAdapter(imageList);
         recyclerView.setAdapter(adapter);
+
+        int spacing = dpToPx(6);
+        recyclerView.addItemDecoration(new GridSpacingItemDecoration(4, spacing, true));
+
+
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             if (checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES)
@@ -101,4 +113,12 @@ public class MainActivity extends AppCompatActivity {
 
         adapter.notifyDataSetChanged();
     }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
+
+
 }

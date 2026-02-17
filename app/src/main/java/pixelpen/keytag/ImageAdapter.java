@@ -1,6 +1,6 @@
-package pixelpen.mediamark;
+package pixelpen.keytag;
 
-import pixelpen.mediamark.R;
+import pixelpen.keytag.R;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,6 +34,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
+
+        holder.imageView.post(() -> {
+            int width = holder.imageView.getWidth();
+            holder.imageView.getLayoutParams().height = width;
+            holder.imageView.requestLayout();
+        });
+
+
         Glide.with(holder.imageView.getContext())
                 .load(images.get(position).uri)
                 .centerCrop()

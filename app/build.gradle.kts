@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "pixelpen.mediamark"
+    namespace = "pixelpen.keytag"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "pixelpen.mediamark"
+        applicationId = "pixelpen.keytag"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
