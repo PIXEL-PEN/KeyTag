@@ -1,46 +1,33 @@
 package pixelpen.keytag;
 
 import android.os.Bundle;
-import android.net.Uri;
 import android.provider.MediaStore;
-import android.content.ContentUris;
 import android.database.Cursor;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.GridLayoutManager;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import androidx.appcompat.app.AppCompatDelegate;
-
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
-    private List<ImageItem> imageList = new ArrayList<>();
-    private ImageAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
-
-        adapter = new ImageAdapter(imageList);
-        recyclerView.setAdapter(adapter);
-
-        int spacing = dpToPx(6);
-        recyclerView.addItemDecoration(new GridSpacingItemDecoration(4, spacing, true));
-
-
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {
             if (checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES)
@@ -50,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
                         100
                 );
             } else {
-                loadImages();
+                loadAlbums();
             }
         } else {
             if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -60,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
                         100
                 );
             } else {
-                loadImages();
+                loadAlbums();
             }
         }
     }
@@ -70,55 +57,80 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100 && grantResults.length > 0
                 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            loadImages();
+            loadAlbums();
         }
     }
 
-    private void loadImages() {
+    private void loadAlbums() {
 
-        imageList.clear();
+        List<AlbumItem> albumList = new ArrayList<>();
 
         String[] projection = {
-                MediaStore.Images.Media._ID
+                MediaStore.Images.Media.BUCKET_ID,
+                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                MediaStore.Images.Media.RELATIVE_PATH
         };
 
-        String sortOrder =
-                MediaStore.Images.Media.DATE_ADDED + " DESC";
-
-        try (Cursor cursor = getContentResolver().query(
+        Cursor cursor = getContentResolver().query(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 projection,
                 null,
                 null,
-                sortOrder
-        )) {
+                MediaStore.Images.Media.DATE_ADDED + " DESC"
+        );
 
-            if (cursor != null) {
-                int idColumn =
-                        cursor.getColumnIndexOrThrow(
-                                MediaStore.Images.Media._ID);
+        if (cursor != null) {
 
-                while (cursor.moveToNext()) {
-                    long id = cursor.getLong(idColumn);
+            Map<Long, AlbumItem> albumMap = new LinkedHashMap<>();
 
-                    Uri uri = ContentUris.withAppendedId(
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                            id
-                    );
+            int bucketIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
+            int bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
+            int pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.RELATIVE_PATH);
 
-                    imageList.add(new ImageItem(id, uri));
+            while (cursor.moveToNext()) {
+
+                long bucketId = cursor.getLong(bucketIdColumn);
+                String bucketName = cursor.getString(bucketNameColumn);
+                String relativePath = cursor.getString(pathColumn);
+
+                if (bucketName == null || relativePath == null) continue;
+
+                String lowerName = bucketName.toLowerCase();
+                String lowerPath = relativePath.toLowerCase();
+
+                // Filter
+                if (!lowerPath.startsWith("dcim/") &&
+                        !lowerPath.startsWith("pictures/")) continue;
+
+                if (lowerPath.contains("android/")) continue;
+                if (lowerPath.contains("whatsapp")) continue;
+                if (lowerPath.contains("telegram")) continue;
+                if (lowerName.startsWith("_")) continue;
+                if (lowerName.startsWith(".")) continue;
+
+                if (!albumMap.containsKey(bucketId)) {
+                    albumMap.put(bucketId,
+                            new AlbumItem(bucketId, bucketName, null, 1));
+                } else {
+                    albumMap.get(bucketId).itemCount++;
                 }
             }
+
+            cursor.close();
+
+            albumList.addAll(albumMap.values());
         }
 
-        adapter.notifyDataSetChanged();
+        recyclerView.setAdapter(new AlbumAdapter(albumList));
+        recyclerView.addItemDecoration(
+                new GridDividerDecoration(4, 0x66FFFFFF
+                        , dpToPx(1))
+        );
+
     }
 
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
-
-
-
 }
