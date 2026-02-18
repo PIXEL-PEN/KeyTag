@@ -12,20 +12,30 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.android.material.appbar.MaterialToolbar;
+
+
 public class AlbumContentsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private List<ImageItem> images = new ArrayList<>();
 
+    private String bucketName;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getWindow().setDecorFitsSystemWindows(true);
+
         setContentView(R.layout.activity_album_contents);
 
         long bucketId = getIntent().getLongExtra("bucket_id", -1);
-        String bucketName = getIntent().getStringExtra("bucket_name");
+        bucketName = getIntent().getStringExtra("bucket_name");
 
-        setTitle(bucketName);
+        MaterialToolbar toolbar = findViewById(R.id.topBar);
+        toolbar.setTitle(bucketName);
 
         recyclerView = findViewById(R.id.recycler_view);
 
@@ -36,20 +46,12 @@ public class AlbumContentsActivity extends AppCompatActivity {
         recyclerView.addItemDecoration(
                 new GridSpacingDecoration(spanCount, spacing)
         );
-        recyclerView.addItemDecoration(
-                new GridDividerDecoration(
-                        4,
-                        0x22FFFFFF,
-                        1
-                )
-        );
-
 
         loadImages(bucketId);
 
         recyclerView.setAdapter(new ImageAdapter(images));
-
     }
+
 
     private void loadImages(long bucketId) {
 
@@ -62,7 +64,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
         String selection = MediaStore.Images.Media.BUCKET_ID + "=?";
         String[] selectionArgs = { String.valueOf(bucketId) };
 
-        String sortOrder = MediaStore.Images.Media.DATE_ADDED + " DESC";
+        String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC";
+
 
         Cursor cursor = getContentResolver().query(
                 collection,
@@ -91,5 +94,10 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
             cursor.close();
         }
+
+
+
+
+
     }
 }

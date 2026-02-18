@@ -13,6 +13,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 import com.bumptech.glide.Glide;
 
+import android.widget.LinearLayout;
+
+import android.content.Intent;
+
 
 
 
@@ -35,19 +39,32 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
 
-        holder.imageView.post(() -> {
-            int width = holder.imageView.getWidth();
-            holder.imageView.getLayoutParams().height = width;
-            holder.imageView.requestLayout();
+        ImageItem item = images.get(position);
+
+        holder.itemView.post(() -> {
+            int width = holder.itemView.getWidth();
+            holder.itemView.getLayoutParams().height = width;
+            holder.itemView.requestLayout();
         });
 
-
         Glide.with(holder.imageView.getContext())
-                .load(images.get(position).uri)
+                .load(item.uri)
                 .centerCrop()
                 .into(holder.imageView);
 
+        holder.itemView.setOnClickListener(v -> {
+
+            Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
+            intent.putExtra("image_uri", item.uri);
+            v.getContext().startActivity(intent);
+        });
+
+
+
+
     }
+
+
 
     @Override
     public int getItemCount() {

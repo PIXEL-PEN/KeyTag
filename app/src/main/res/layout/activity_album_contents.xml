@@ -1,7 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.recyclerview.widget.RecyclerView
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/recycler_view"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/kt_background"/>
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:background="#34495E"
+        android:titleTextColor="@android:color/white"
+        android:paddingStart="16dp"
+        android:gravity="center_vertical"
+        app:titleTextAppearance="@style/ToolbarTitle" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingLeft="9dp"
+        android:paddingRight="9dp"
+        android:clipToPadding="false" />
+
+</LinearLayout>

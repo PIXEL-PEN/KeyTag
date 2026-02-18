@@ -20,16 +20,18 @@ public class GridSpacingDecoration extends RecyclerView.ItemDecoration {
                                RecyclerView parent,
                                RecyclerView.State state) {
 
+        int half = spacing / 2;
+
+        outRect.left = half;
+        outRect.right = half;
+        outRect.bottom = spacing;
+
         int position = parent.getChildAdapterPosition(view);
-        int column = position % spanCount;
-
-        outRect.left = spacing - column * spacing / spanCount;
-        outRect.right = (column + 1) * spacing / spanCount;
-
         if (position < spanCount) {
             outRect.top = spacing;
         }
-
-        outRect.bottom = spacing;
     }
+
+
+
 }

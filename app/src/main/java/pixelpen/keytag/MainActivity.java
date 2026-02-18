@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import com.google.android.material.appbar.MaterialToolbar;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,9 +26,17 @@ public class MainActivity extends AppCompatActivity {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
 
         super.onCreate(savedInstanceState);
+
+        getWindow().setDecorFitsSystemWindows(true);
+
         setContentView(R.layout.activity_main);
 
-        recyclerView = findViewById(R.id.recyclerView);
+        MaterialToolbar toolbar = findViewById(R.id.topBar);
+        toolbar.setTitle("Albums");
+
+
+        recyclerView = findViewById(R.id.recycler_view);
+
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {

@@ -32,6 +32,10 @@
             android:name=".AlbumContentsActivity"
             android:exported="false" />
 
+        <activity android:name=".ImageViewerActivity"/>
+
+
+
     </application>
 
 

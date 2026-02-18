@@ -12,4 +12,7 @@ public class ImageItem {
         this.id = id;
         this.uri = uri;
     }
+
+
+
 }

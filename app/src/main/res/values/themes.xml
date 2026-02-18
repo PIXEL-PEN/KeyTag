@@ -1,16 +1,8 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
 
-    <!-- Base application theme -->
-    <style name="Base.Theme.KeyTag" parent="Theme.Material3.DayNight.NoActionBar">
-
-    <!-- Customize light theme here if needed -->
-    </style>
-
-    <!-- App theme -->
-    <style name="Theme.KeyTag" parent="Base.Theme.KeyTag">
+    <style name="Theme.KeyTag" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:colorBackground">@color/kt_background</item>
     </style>
-
-
 
 </resources>
