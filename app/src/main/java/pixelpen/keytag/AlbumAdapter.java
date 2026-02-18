@@ -8,6 +8,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import android.content.Intent;
+
 
 import java.util.List;
 
@@ -34,6 +36,17 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
 
         holder.textName.setText(album.bucketName);
         holder.textCount.setText(album.itemCount + " items");
+
+        holder.itemView.setOnClickListener(v -> {
+
+            Intent intent = new Intent(v.getContext(), AlbumContentsActivity.class);
+            intent.putExtra("bucket_id", album.bucketId);
+            intent.putExtra("bucket_name", album.bucketName);
+            v.getContext().startActivity(intent);
+        });
+
+
+
 
         // Make tile square
         holder.itemView.post(() -> {
