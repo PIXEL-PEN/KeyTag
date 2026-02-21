@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import com.google.android.material.appbar.MaterialToolbar;
 
-
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -33,10 +32,9 @@ public class MainActivity extends AppCompatActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.topBar);
         toolbar.setTitle("Albums");
-
+        setSupportActionBar(toolbar);
 
         recyclerView = findViewById(R.id.recycler_view);
-
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {
@@ -60,6 +58,35 @@ public class MainActivity extends AppCompatActivity {
                 loadAlbums();
             }
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+
+        int id = item.getItemId();
+
+        if (id == R.id.action_hide) {
+            android.widget.Toast.makeText(this, "Hide clicked", android.widget.Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        if (id == R.id.action_include) {
+            android.widget.Toast.makeText(this, "Include Folder clicked", android.widget.Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        if (id == R.id.action_sort) {
+            android.widget.Toast.makeText(this, "Sort clicked", android.widget.Toast.LENGTH_SHORT).show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -108,7 +135,6 @@ public class MainActivity extends AppCompatActivity {
                 String lowerName = bucketName.toLowerCase();
                 String lowerPath = relativePath.toLowerCase();
 
-                // Filter
                 if (!lowerPath.startsWith("dcim/") &&
                         !lowerPath.startsWith("pictures/")) continue;
 
@@ -127,16 +153,13 @@ public class MainActivity extends AppCompatActivity {
             }
 
             cursor.close();
-
             albumList.addAll(albumMap.values());
         }
 
         recyclerView.setAdapter(new AlbumAdapter(albumList));
         recyclerView.addItemDecoration(
-                new GridDividerDecoration(4, 0x66FFFFFF
-                        , dpToPx(1))
+                new GridDividerDecoration(4, 0x66FFFFFF, dpToPx(1))
         );
-
     }
 
     private int dpToPx(int dp) {

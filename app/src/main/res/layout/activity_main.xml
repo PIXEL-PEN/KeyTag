@@ -7,7 +7,7 @@
     android:fitsSystemWindows="true">
 
 
-<com.google.android.material.appbar.MaterialToolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="54dp"
@@ -16,6 +16,7 @@
         android:paddingStart="16dp"
         android:gravity="center_vertical"
         app:titleTextAppearance="@style/ToolbarTitle" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"

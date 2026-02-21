@@ -4,6 +4,9 @@ package pixelpen.keytag;
 
 import android.net.Uri;
 
+
+
+
 public class ImageItem {
     public long id;
     public Uri uri;
@@ -13,6 +16,6 @@ public class ImageItem {
         this.uri = uri;
     }
 
-
+    public boolean isSelected = false;
 
 }

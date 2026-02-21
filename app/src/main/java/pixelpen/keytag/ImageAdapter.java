@@ -1,7 +1,5 @@
 package pixelpen.keytag;
 
-import pixelpen.keytag.R;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,22 +8,22 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.List;
 import com.bumptech.glide.Glide;
 
-import android.widget.LinearLayout;
-
-import android.content.Intent;
-
-
-
+import java.util.List;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
-    private List<ImageItem> images;
+    public interface SelectionListener {
+        void onSelectionChanged(int selectedCount);
+    }
 
-    public ImageAdapter(List<ImageItem> images) {
+    private List<ImageItem> images;
+    private SelectionListener selectionListener;
+
+    public ImageAdapter(List<ImageItem> images, SelectionListener listener) {
         this.images = images;
+        this.selectionListener = listener;
     }
 
     @NonNull
@@ -41,10 +39,10 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
         ImageItem item = images.get(position);
 
-        holder.itemView.post(() -> {
-            int width = holder.itemView.getWidth();
-            holder.itemView.getLayoutParams().height = width;
-            holder.itemView.requestLayout();
+        holder.imageView.post(() -> {
+            int width = holder.imageView.getWidth();
+            holder.imageView.getLayoutParams().height = width;
+            holder.imageView.requestLayout();
         });
 
         Glide.with(holder.imageView.getContext())
@@ -52,23 +50,51 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
                 .centerCrop()
                 .into(holder.imageView);
 
-        holder.itemView.setOnClickListener(v -> {
+        // Visual feedback
+        holder.itemView.setAlpha(item.isSelected ? 0.5f : 1f);
 
-            Intent intent = new Intent(v.getContext(), ImageViewerActivity.class);
-            intent.putExtra("image_uri", item.uri);
-            v.getContext().startActivity(intent);
+        // Click behavior
+        holder.itemView.setOnClickListener(v -> {
+            if (hasSelection()) {
+                toggleSelection(position);
+            }
         });
 
-
-
-
+        // Long press starts selection
+        holder.itemView.setOnLongClickListener(v -> {
+            toggleSelection(position);
+            return true;
+        });
     }
-
-
 
     @Override
     public int getItemCount() {
         return images.size();
+    }
+
+    private void toggleSelection(int position) {
+        ImageItem item = images.get(position);
+        item.isSelected = !item.isSelected;
+        notifyItemChanged(position);
+
+        if (selectionListener != null) {
+            selectionListener.onSelectionChanged(getSelectedCount());
+        }
+    }
+
+    private boolean hasSelection() {
+        for (ImageItem i : images) {
+            if (i.isSelected) return true;
+        }
+        return false;
+    }
+
+    private int getSelectedCount() {
+        int count = 0;
+        for (ImageItem i : images) {
+            if (i.isSelected) count++;
+        }
+        return count;
     }
 
     static class VH extends RecyclerView.ViewHolder {

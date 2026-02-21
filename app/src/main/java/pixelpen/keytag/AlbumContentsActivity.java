@@ -42,14 +42,25 @@ public class AlbumContentsActivity extends AppCompatActivity {
         int spanCount = 4;
         recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
 
-        int spacing = (int) (9 * getResources().getDisplayMetrics().density);
+        int spacing = (int) (5 * getResources().getDisplayMetrics().density);
         recyclerView.addItemDecoration(
                 new GridSpacingDecoration(spanCount, spacing)
         );
 
         loadImages(bucketId);
 
-        recyclerView.setAdapter(new ImageAdapter(images));
+        ImageAdapter adapter = new ImageAdapter(images, selectedCount -> {
+
+
+
+            if (selectedCount > 0) {
+                toolbar.setTitle(selectedCount + " selected");
+            } else {
+                toolbar.setTitle(bucketName);
+            }
+        });
+
+        recyclerView.setAdapter(adapter);
     }
 
 
