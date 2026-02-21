@@ -52,8 +52,19 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
         // Click behavior
         holder.itemView.setOnClickListener(v -> {
-            if (hasSelection()) {
+
+            if (selectionMode) {
                 toggleSelection(position);
+            } else {
+                // Normal tap → open viewer
+                android.content.Context context = v.getContext();
+
+                android.content.Intent intent =
+                        new android.content.Intent(context, ImageViewerActivity.class);
+
+                intent.putExtra("image_uri", item.uri.toString());
+
+                context.startActivity(intent);
             }
         });
 

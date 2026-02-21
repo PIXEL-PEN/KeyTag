@@ -15,7 +15,12 @@ public class ImageViewerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_viewer);
 
-        Uri uri = getIntent().getParcelableExtra("image_uri");
+        String uriString = getIntent().getStringExtra("image_uri");
+
+        Uri uri = null;
+        if (uriString != null) {
+            uri = Uri.parse(uriString);
+        }
 
         ImageView imageView = findViewById(R.id.fullImage);
 

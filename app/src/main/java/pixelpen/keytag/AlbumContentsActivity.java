@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import android.view.MenuItem;
 
 
 public class AlbumContentsActivity extends AppCompatActivity {
@@ -50,15 +51,31 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         adapter = new ImageAdapter(images, selectedCount -> {
 
-            if (selectedCount > 0) {
-                toolbar.setTitle(selectedCount + " selected");
-                toolbar.setNavigationIcon(android.R.drawable.ic_menu_close_clear_cancel);
 
-                toolbar.setNavigationOnClickListener(v -> {
-                    adapter.clearSelection();
+
+            toolbar.getMenu().clear();
+
+            if (selectedCount > 0) {
+
+                toolbar.setTitle(selectedCount + " selected");
+
+                toolbar.setNavigationIcon(android.R.drawable.ic_menu_close_clear_cancel);
+                toolbar.setNavigationOnClickListener(v -> adapter.clearSelection());
+
+                toolbar.getMenu().add("TAG")
+                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+
+                toolbar.setOnMenuItemClickListener(item -> {
+                    android.widget.Toast.makeText(
+                            this,
+                            selectedCount + " items ready for tagging",
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show();
+                    return true;
                 });
 
             } else {
+
                 toolbar.setTitle(bucketName);
                 toolbar.setNavigationIcon(null);
             }
