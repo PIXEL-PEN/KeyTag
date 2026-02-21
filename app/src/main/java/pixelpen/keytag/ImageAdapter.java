@@ -60,13 +60,20 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
             if (selectionMode) {
                 toggleSelection(position);
             } else {
-                // Normal tap → open viewer
+
                 android.content.Context context = v.getContext();
 
                 android.content.Intent intent =
                         new android.content.Intent(context, ImageViewerActivity.class);
 
-                intent.putExtra("image_uri", item.uri.toString());
+                java.util.ArrayList<String> uriList = new java.util.ArrayList<>();
+
+                for (ImageItem img : images) {
+                    uriList.add(img.uri.toString());
+                }
+
+                intent.putStringArrayListExtra("image_list", uriList);
+                intent.putExtra("start_position", position);
 
                 context.startActivity(intent);
             }

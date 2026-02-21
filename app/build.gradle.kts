@@ -42,6 +42,7 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation(libs.recyclerview)
 
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
     implementation(libs.glide)
     annotationProcessor(libs.glide)
 

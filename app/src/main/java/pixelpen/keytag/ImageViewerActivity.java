@@ -1,31 +1,35 @@
 package pixelpen.keytag;
 
-import android.net.Uri;
 import android.os.Bundle;
-import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.bumptech.glide.Glide;
+import androidx.viewpager2.widget.ViewPager2;
+import java.util.ArrayList;
 
 public class ImageViewerActivity extends AppCompatActivity {
+
+    private ViewPager2 viewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_viewer);
 
-        String uriString = getIntent().getStringExtra("image_uri");
+        viewPager = findViewById(R.id.viewPager);
 
-        Uri uri = null;
-        if (uriString != null) {
-            uri = Uri.parse(uriString);
+        ArrayList<String> imageList =
+                getIntent().getStringArrayListExtra("image_list");
+
+        int startPosition =
+                getIntent().getIntExtra("start_position", 0);
+
+        if (imageList != null && !imageList.isEmpty()) {
+
+            ViewerPagerAdapter adapter =
+                    new ViewerPagerAdapter(imageList);
+
+            viewPager.setAdapter(adapter);
+            viewPager.setCurrentItem(startPosition, false);
         }
-
-        ImageView imageView = findViewById(R.id.fullImage);
-
-        Glide.with(this)
-                .load(uri)
-                .into(imageView);
     }
 }
