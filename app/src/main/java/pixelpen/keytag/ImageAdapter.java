@@ -40,11 +40,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
         ImageItem item = images.get(position);
 
-        holder.imageView.post(() -> {
-            int width = holder.imageView.getWidth();
-            holder.imageView.getLayoutParams().height = width;
-            holder.imageView.requestLayout();
-        });
+
 
         Glide.with(holder.imageView.getContext())
                 .load(item.uri)

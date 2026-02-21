@@ -65,6 +65,9 @@ public class AlbumContentsActivity extends AppCompatActivity {
         });
 
         recyclerView.setAdapter(adapter);
+
+        recyclerView.setHasFixedSize(true);
+
     }
 
     private void loadImages(long bucketId) {
