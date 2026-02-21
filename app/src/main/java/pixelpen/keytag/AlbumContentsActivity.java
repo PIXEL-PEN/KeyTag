@@ -24,6 +24,13 @@ public class AlbumContentsActivity extends AppCompatActivity {
     private String bucketName;
     private ImageAdapter adapter;
 
+    private GridLayoutManager layoutManager;
+    private int spanCount = 4;
+    private final int MIN_SPAN = 2;
+    private final int MAX_SPAN = 6;
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,9 +46,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recycler_view);
 
-        int spanCount = 4;
-        recyclerView.setLayoutManager(new GridLayoutManager(this, spanCount));
-
+        layoutManager = new GridLayoutManager(this, spanCount);
+        recyclerView.setLayoutManager(layoutManager);
         int spacing = (int) (5 * getResources().getDisplayMetrics().density);
         recyclerView.addItemDecoration(
                 new GridSpacingDecoration(spanCount, spacing)
@@ -50,7 +56,37 @@ public class AlbumContentsActivity extends AppCompatActivity {
         loadImages(bucketId);
 
         adapter = new ImageAdapter(images, selectedCount -> {
+            android.view.ScaleGestureDetector scaleDetector =
+                    new android.view.ScaleGestureDetector(this,
+                            new android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
 
+                                @Override
+                                public boolean onScale(android.view.ScaleGestureDetector detector) {
+
+                                    float scaleFactor = detector.getScaleFactor();
+
+                                    if (scaleFactor > 1.05f) {
+                                        // pinch out → fewer columns
+                                        if (spanCount > MIN_SPAN) {
+                                            spanCount--;
+                                            layoutManager.setSpanCount(spanCount);
+                                        }
+                                    } else if (scaleFactor < 0.95f) {
+                                        // pinch in → more columns
+                                        if (spanCount < MAX_SPAN) {
+                                            spanCount++;
+                                            layoutManager.setSpanCount(spanCount);
+                                        }
+                                    }
+
+                                    return true;
+                                }
+                            });
+
+            recyclerView.setOnTouchListener((v, event) -> {
+                scaleDetector.onTouchEvent(event);
+                return false;
+            });
 
 
             toolbar.getMenu().clear();
