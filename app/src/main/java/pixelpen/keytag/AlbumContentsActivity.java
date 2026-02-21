@@ -21,14 +21,13 @@ public class AlbumContentsActivity extends AppCompatActivity {
     private List<ImageItem> images = new ArrayList<>();
 
     private String bucketName;
-
+    private ImageAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         getWindow().setDecorFitsSystemWindows(true);
-
         setContentView(R.layout.activity_album_contents);
 
         long bucketId = getIntent().getLongExtra("bucket_id", -1);
@@ -49,20 +48,24 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         loadImages(bucketId);
 
-        ImageAdapter adapter = new ImageAdapter(images, selectedCount -> {
-
-
+        adapter = new ImageAdapter(images, selectedCount -> {
 
             if (selectedCount > 0) {
                 toolbar.setTitle(selectedCount + " selected");
+                toolbar.setNavigationIcon(android.R.drawable.ic_menu_close_clear_cancel);
+
+                toolbar.setNavigationOnClickListener(v -> {
+                    adapter.clearSelection();
+                });
+
             } else {
                 toolbar.setTitle(bucketName);
+                toolbar.setNavigationIcon(null);
             }
         });
 
         recyclerView.setAdapter(adapter);
     }
-
 
     private void loadImages(long bucketId) {
 

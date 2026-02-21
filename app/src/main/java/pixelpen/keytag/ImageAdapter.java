@@ -20,6 +20,7 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
     private List<ImageItem> images;
     private SelectionListener selectionListener;
+    private boolean selectionMode = false;
 
     public ImageAdapter(List<ImageItem> images, SelectionListener listener) {
         this.images = images;
@@ -105,4 +106,17 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
             imageView = itemView.findViewById(R.id.imageView);
         }
     }
+
+    public void clearSelection() {
+        for (ImageItem item : images) {
+            item.isSelected = false;
+        }
+        selectionMode = false;
+        notifyDataSetChanged();
+
+        if (selectionListener != null) {
+            selectionListener.onSelectionChanged(0);
+        }
+    }
+
 }
