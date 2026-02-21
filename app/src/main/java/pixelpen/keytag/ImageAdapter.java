@@ -48,7 +48,11 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
                 .into(holder.imageView);
 
         // Visual feedback
-        holder.itemView.setAlpha(item.isSelected ? 0.5f : 1f);
+        holder.selectionCircle.setVisibility(
+                item.isSelected ? View.VISIBLE : View.GONE);
+
+        holder.checkMark.setVisibility(
+                item.isSelected ? View.VISIBLE : View.GONE);
 
         // Click behavior
         holder.itemView.setOnClickListener(v -> {
@@ -107,10 +111,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
     static class VH extends RecyclerView.ViewHolder {
         ImageView imageView;
+        View selectionCircle;
+        ImageView checkMark;
 
         VH(View itemView) {
             super(itemView);
             imageView = itemView.findViewById(R.id.imageView);
+            selectionCircle = itemView.findViewById(R.id.selectionCircle);
+            checkMark = itemView.findViewById(R.id.checkMark);
         }
     }
 

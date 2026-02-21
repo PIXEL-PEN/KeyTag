@@ -16,4 +16,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <!-- Blue circle background -->
+    <View
+        android:id="@+id/selectionCircle"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_margin="6dp"
+        android:visibility="gone"
+        android:background="@drawable/selection_circle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- Check mark -->
+    <ImageView
+        android:id="@+id/checkMark"
+        android:layout_width="14dp"
+        android:layout_height="14dp"
+        android:visibility="gone"
+        android:src="@drawable/ic_check_white"
+        app:layout_constraintBottom_toBottomOf="@id/selectionCircle"
+        app:layout_constraintTop_toTopOf="@id/selectionCircle"
+        app:layout_constraintStart_toStartOf="@id/selectionCircle"
+        app:layout_constraintEnd_toEndOf="@id/selectionCircle"/>
+
 </androidx.constraintlayout.widget.ConstraintLayout>
