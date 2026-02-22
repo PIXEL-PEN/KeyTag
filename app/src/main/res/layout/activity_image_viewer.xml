@@ -1,18 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Keyword Panel -->
+    <LinearLayout
+        android:id="@+id/keywordPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#DD000000"
+        android:padding="12dp"
+        android:layout_gravity="bottom"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/keywordInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Add keyword"
+            android:textColor="@android:color/white"
+            android:textColorHint="#88FFFFFF"
+            android:background="@android:color/transparent" />
+
+        <TextView
+            android:id="@+id/saveKeyword"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SAVE"
+            android:textColor="#4DA3FF"
+            android:paddingStart="12dp"
+            android:paddingEnd="4dp"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+</FrameLayout>

@@ -16,6 +16,17 @@ import com.google.android.material.appbar.MaterialToolbar;
 import java.util.ArrayList;
 import java.util.List;
 
+import androidx.appcompat.app.AlertDialog;
+import android.view.LayoutInflater;
+import android.widget.EditText;
+
+import pixelpen.keytag.db.AppDatabase;
+import pixelpen.keytag.db.TaggingDao;
+import pixelpen.keytag.db.ImageEntity;
+import pixelpen.keytag.db.KeywordEntity;
+import pixelpen.keytag.db.ImageKeywordCrossRef;
+
+
 public class AlbumContentsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -69,11 +80,9 @@ public class AlbumContentsActivity extends AppCompatActivity {
                         .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
                 toolbar.setOnMenuItemClickListener(item -> {
-                    android.widget.Toast.makeText(
-                            this,
-                            selectedCount + " items ready for tagging",
-                            android.widget.Toast.LENGTH_SHORT
-                    ).show();
+
+                    showBatchTagDialog();
+
                     return true;
                 });
 
@@ -157,5 +166,69 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
             cursor.close();
         }
+    }
+
+    private void showBatchTagDialog() {
+
+        android.view.View dialogView = getLayoutInflater()
+                .inflate(R.layout.dialog_batch_tag, null);
+
+        android.widget.EditText tagInput =
+                dialogView.findViewById(R.id.tagInput);
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Apply", (dialog, which) -> {
+
+                    String keyword = tagInput.getText().toString().trim();
+
+                    if (!keyword.isEmpty()) {
+                        applyKeywordToSelected(keyword);
+                    }
+                })
+                .show();
+    }
+
+    private void applyKeywordToSelected(String keyword) {
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            // Ensure keyword exists
+            KeywordEntity keywordEntity = dao.getKeywordByName(keyword);
+
+            if (keywordEntity == null) {
+                dao.insertKeyword(new KeywordEntity(keyword, 0));
+                keywordEntity = dao.getKeywordByName(keyword);
+            }
+
+            if (keywordEntity == null) return;
+
+            for (ImageItem item : images) {
+
+                if (!item.isSelected) continue;
+
+                String uriString = item.uri.toString();
+
+                // Ensure image exists
+                ImageEntity image = dao.getImageByUri(uriString);
+
+                if (image == null) {
+                    dao.insertImage(new ImageEntity(uriString, System.currentTimeMillis()));
+                    image = dao.getImageByUri(uriString);
+                }
+
+                if (image == null) continue;
+
+                // Insert cross reference
+                dao.insertCrossRef(
+                        new ImageKeywordCrossRef(image.id, keywordEntity.id)
+                );
+            }
+
+        }).start();
     }
 }
