@@ -37,4 +37,6 @@ public interface TaggingDao {
             "WHERE ik.imageId = :imageId")
     List<KeywordEntity> getKeywordsForImage(long imageId);
 
+    @Query("SELECT name FROM keywords ORDER BY usageCount DESC")
+    List<String> getAllKeywordNames();
 }

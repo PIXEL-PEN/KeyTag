@@ -26,6 +26,9 @@ import pixelpen.keytag.db.ImageEntity;
 import pixelpen.keytag.db.KeywordEntity;
 import pixelpen.keytag.db.ImageKeywordCrossRef;
 
+import android.widget.AutoCompleteTextView;
+import android.widget.ArrayAdapter;
+
 
 public class AlbumContentsActivity extends AppCompatActivity {
 
@@ -173,8 +176,32 @@ public class AlbumContentsActivity extends AppCompatActivity {
         android.view.View dialogView = getLayoutInflater()
                 .inflate(R.layout.dialog_batch_tag, null);
 
-        android.widget.EditText tagInput =
+        AutoCompleteTextView tagInput =
                 dialogView.findViewById(R.id.tagInput);
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            java.util.List<String> keywords =
+                    dao.getAllKeywordNames();
+
+            runOnUiThread(() -> {
+
+                ArrayAdapter<String> adapter =
+                        new ArrayAdapter<>(
+                                this,
+                                android.R.layout.simple_dropdown_item_1line,
+                                keywords
+                        );
+
+                tagInput.setAdapter(adapter);
+            });
+
+        }).start();
+
+
 
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
@@ -197,7 +224,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
 
-            // Ensure keyword exists
             KeywordEntity keywordEntity = dao.getKeywordByName(keyword);
 
             if (keywordEntity == null) {
@@ -213,7 +239,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
                 String uriString = item.uri.toString();
 
-                // Ensure image exists
                 ImageEntity image = dao.getImageByUri(uriString);
 
                 if (image == null) {
@@ -223,11 +248,19 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
                 if (image == null) continue;
 
-                // Insert cross reference
                 dao.insertCrossRef(
                         new ImageKeywordCrossRef(image.id, keywordEntity.id)
                 );
             }
+
+            runOnUiThread(() -> {
+                adapter.clearSelection();
+                android.widget.Toast.makeText(
+                        this,
+                        "Keyword applied",
+                        android.widget.Toast.LENGTH_SHORT
+                ).show();
+            });
 
         }).start();
     }
