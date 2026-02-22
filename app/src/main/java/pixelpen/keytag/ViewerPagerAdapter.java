@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.github.chrisbanes.photoview.PhotoView;
+import com.github.chrisbanes.photoview.OnPhotoTapListener;
 
 import java.util.List;
 
@@ -46,7 +47,14 @@ public class ViewerPagerAdapter extends RecyclerView.Adapter<ViewerPagerAdapter.
         Glide.with(holder.photoView.getContext())
                 .load(uri)
                 .into(holder.photoView);
+
+        holder.photoView.setOnPhotoTapListener((view, x, y) -> {
+            if (view.getContext() instanceof ImageViewerActivity) {
+                ((ImageViewerActivity) view.getContext()).toggleSystemUi();
+            }
+        });
     }
+
 
     @Override
     public int getItemCount() {

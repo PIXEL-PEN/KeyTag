@@ -13,6 +13,8 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
 
+    private boolean isSystemUiVisible = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,4 +48,20 @@ public class ImageViewerActivity extends AppCompatActivity {
             viewPager.setCurrentItem(startPosition, false);
         }
     }
+
+    public void toggleSystemUi() {
+
+        WindowInsetsControllerCompat controller =
+                new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+
+        if (isSystemUiVisible) {
+            controller.hide(android.view.WindowInsets.Type.systemBars());
+        } else {
+            controller.show(android.view.WindowInsets.Type.systemBars());
+        }
+
+        isSystemUiVisible = !isSystemUiVisible;
+    }
+
+
 }
