@@ -4,17 +4,17 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.MenuItem;
+import android.view.ScaleGestureDetector;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.appbar.MaterialToolbar;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.android.material.appbar.MaterialToolbar;
-import android.view.MenuItem;
-
 
 public class AlbumContentsActivity extends AppCompatActivity {
 
@@ -28,8 +28,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
     private int spanCount = 4;
     private final int MIN_SPAN = 2;
     private final int MAX_SPAN = 6;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +46,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         layoutManager = new GridLayoutManager(this, spanCount);
         recyclerView.setLayoutManager(layoutManager);
+
         int spacing = (int) (5 * getResources().getDisplayMetrics().density);
         recyclerView.addItemDecoration(
                 new GridSpacingDecoration(spanCount, spacing)
@@ -56,38 +55,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
         loadImages(bucketId);
 
         adapter = new ImageAdapter(images, selectedCount -> {
-            android.view.ScaleGestureDetector scaleDetector =
-                    new android.view.ScaleGestureDetector(this,
-                            new android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
-
-                                @Override
-                                public boolean onScale(android.view.ScaleGestureDetector detector) {
-
-                                    float scaleFactor = detector.getScaleFactor();
-
-                                    if (scaleFactor > 1.05f) {
-                                        // pinch out → fewer columns
-                                        if (spanCount > MIN_SPAN) {
-                                            spanCount--;
-                                            layoutManager.setSpanCount(spanCount);
-                                        }
-                                    } else if (scaleFactor < 0.95f) {
-                                        // pinch in → more columns
-                                        if (spanCount < MAX_SPAN) {
-                                            spanCount++;
-                                            layoutManager.setSpanCount(spanCount);
-                                        }
-                                    }
-
-                                    return true;
-                                }
-                            });
-
-            recyclerView.setOnTouchListener((v, event) -> {
-                scaleDetector.onTouchEvent(event);
-                return false;
-            });
-
 
             toolbar.getMenu().clear();
 
@@ -111,16 +78,44 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 });
 
             } else {
-
                 toolbar.setTitle(bucketName);
                 toolbar.setNavigationIcon(null);
             }
         });
 
         recyclerView.setAdapter(adapter);
-
         recyclerView.setHasFixedSize(true);
 
+        // GRID PINCH — Installed ONCE
+        ScaleGestureDetector scaleDetector =
+                new ScaleGestureDetector(this,
+                        new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+
+                            @Override
+                            public boolean onScale(ScaleGestureDetector detector) {
+
+                                float scaleFactor = detector.getScaleFactor();
+
+                                if (scaleFactor > 1.05f) {
+                                    if (spanCount > MIN_SPAN) {
+                                        spanCount--;
+                                        layoutManager.setSpanCount(spanCount);
+                                    }
+                                } else if (scaleFactor < 0.95f) {
+                                    if (spanCount < MAX_SPAN) {
+                                        spanCount++;
+                                        layoutManager.setSpanCount(spanCount);
+                                    }
+                                }
+
+                                return true;
+                            }
+                        });
+
+        recyclerView.setOnTouchListener((v, event) -> {
+            scaleDetector.onTouchEvent(event);
+            return false;
+        });
     }
 
     private void loadImages(long bucketId) {
@@ -135,7 +130,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
         String[] selectionArgs = { String.valueOf(bucketId) };
 
         String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC";
-
 
         Cursor cursor = getContentResolver().query(
                 collection,
@@ -159,15 +153,9 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 );
 
                 images.add(new ImageItem(id, contentUri));
-
             }
 
             cursor.close();
         }
-
-
-
-
-
     }
 }
