@@ -37,15 +37,33 @@ public interface TaggingDao {
             "WHERE ik.imageId = :imageId")
     List<KeywordEntity> getKeywordsForImage(long imageId);
 
+    // Get all keyword names (sorted by usage)
     @Query("SELECT name FROM keywords ORDER BY usageCount DESC")
     List<String> getAllKeywordNames();
 
+    // Increment usage count
     @Query("UPDATE keywords SET usageCount = usageCount + 1 WHERE id = :keywordId")
     void incrementUsage(long keywordId);
+
+    // Decrement usage count
+    @Query("UPDATE keywords SET usageCount = usageCount - 1 WHERE id = :keywordId")
+    void decrementUsage(long keywordId);
+
+    // Get usage count
+    @Query("SELECT usageCount FROM keywords WHERE id = :keywordId")
+    int getUsageCount(long keywordId);
+
+    // Remove keyword from specific image
+    @Query("DELETE FROM image_keywords WHERE imageId = :imageId AND keywordId = :keywordId")
+    void removeCrossRef(long imageId, long keywordId);
+    // Delete keyword entirely
+    @Query("DELETE FROM keywords WHERE id = :keywordId")
+    void deleteKeywordById(long keywordId);
+
+    // Search images by keyword
     @Query("SELECT i.uri FROM images i " +
             "INNER JOIN image_keywords ik ON i.id = ik.imageId " +
             "INNER JOIN keywords k ON k.id = ik.keywordId " +
             "WHERE k.name = :keyword")
     List<String> getImageUrisForKeyword(String keyword);
-
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/black">
@@ -9,6 +10,17 @@
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <!-- Keyword Chips -->
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/keywordChipGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:layout_gravity="top"
+        android:padding="4dp"
+        app:singleLine="false"
+        app:chipSpacing="8dp"/>
 
     <!-- Keyword Panel -->
     <LinearLayout
