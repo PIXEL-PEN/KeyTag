@@ -15,6 +15,13 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import com.google.android.material.appbar.MaterialToolbar;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import android.widget.AutoCompleteTextView;
+import android.widget.ArrayAdapter;
+import pixelpen.keytag.db.AppDatabase;
+import pixelpen.keytag.db.TaggingDao;
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -86,7 +93,17 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.action_search) {
+            showGlobalSearchDialog();
+            return true;
+        }
+
+
         return super.onOptionsItemSelected(item);
+
+
+
+
     }
 
     @Override
@@ -166,4 +183,91 @@ public class MainActivity extends AppCompatActivity {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
+
+    private void showGlobalSearchDialog() {
+
+        android.view.View dialogView =
+                getLayoutInflater().inflate(R.layout.dialog_global_search, null);
+
+        AutoCompleteTextView searchInput =
+                dialogView.findViewById(R.id.searchInput);
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            java.util.List<String> keywords =
+                    dao.getAllKeywordNames();
+
+            runOnUiThread(() -> {
+
+                ArrayAdapter<String> adapter =
+                        new ArrayAdapter<>(
+                                this,
+                                android.R.layout.simple_dropdown_item_1line,
+                                keywords
+                        );
+
+                searchInput.setAdapter(adapter);
+            });
+
+        }).start();
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Search by keyword")
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Search", (dialog, which) -> {
+
+                    String keyword =
+                            searchInput.getText().toString().trim().toLowerCase();
+
+                    if (!keyword.isEmpty()) {
+                        performGlobalSearch(keyword);
+                    }
+                })
+                .show();
+    }
+
+    private void performGlobalSearch(String keyword) {
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            java.util.List<String> uris =
+                    dao.getImageUrisForKeyword(keyword);
+
+            runOnUiThread(() -> {
+
+                if (uris.isEmpty()) {
+                    android.widget.Toast.makeText(
+                            this,
+                            "No results found",
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show();
+                    return;
+                }
+
+                android.content.Intent intent =
+                        new android.content.Intent(this,
+                                AlbumContentsActivity.class);
+
+                intent.putStringArrayListExtra(
+                        "search_results",
+                        new ArrayList<>(uris)
+                );
+
+                intent.putExtra("bucket_name", "Search Results");
+
+                startActivity(intent);
+            });
+
+        }).start();
+    }
+
+
+
 }

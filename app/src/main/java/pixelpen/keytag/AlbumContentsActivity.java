@@ -12,23 +12,19 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.appbar.MaterialToolbar;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import androidx.appcompat.app.AlertDialog;
-import android.view.LayoutInflater;
-import android.widget.EditText;
+import android.widget.AutoCompleteTextView;
+import android.widget.ArrayAdapter;
 
 import pixelpen.keytag.db.AppDatabase;
 import pixelpen.keytag.db.TaggingDao;
 import pixelpen.keytag.db.ImageEntity;
 import pixelpen.keytag.db.KeywordEntity;
 import pixelpen.keytag.db.ImageKeywordCrossRef;
-
-import android.widget.AutoCompleteTextView;
-import android.widget.ArrayAdapter;
-
 
 public class AlbumContentsActivity extends AppCompatActivity {
 
@@ -46,6 +42,9 @@ public class AlbumContentsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ArrayList<String> searchUris =
+                getIntent().getStringArrayListExtra("search_results");
+
 
         getWindow().setDecorFitsSystemWindows(true);
         setContentView(R.layout.activity_album_contents);
@@ -66,11 +65,17 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 new GridSpacingDecoration(spanCount, spacing)
         );
 
-        loadImages(bucketId);
+        if (searchUris != null) {
+            loadSearchResults(searchUris);
+        } else {
+            loadImages(bucketId);
+        }
 
         adapter = new ImageAdapter(images, selectedCount -> {
 
             toolbar.getMenu().clear();
+            toolbar.setNavigationIcon(null);
+            toolbar.setOnMenuItemClickListener(null);
 
             if (selectedCount > 0) {
 
@@ -83,13 +88,12 @@ public class AlbumContentsActivity extends AppCompatActivity {
                         .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
                 toolbar.setOnMenuItemClickListener(item -> {
-
                     showBatchTagDialog();
-
                     return true;
                 });
 
             } else {
+
                 toolbar.setTitle(bucketName);
                 toolbar.setNavigationIcon(null);
             }
@@ -98,7 +102,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
         recyclerView.setHasFixedSize(true);
 
-        // GRID PINCH — Installed ONCE
+        // Grid pinch zoom
         ScaleGestureDetector scaleDetector =
                 new ScaleGestureDetector(this,
                         new ScaleGestureDetector.SimpleOnScaleGestureListener() {
@@ -134,9 +138,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
 
-        String[] projection = {
-                MediaStore.Images.Media._ID
-        };
+        String[] projection = { MediaStore.Images.Media._ID };
 
         String selection = MediaStore.Images.Media.BUCKET_ID + "=?";
         String[] selectionArgs = { String.valueOf(bucketId) };
@@ -173,8 +175,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
     private void showBatchTagDialog() {
 
-        android.view.View dialogView = getLayoutInflater()
-                .inflate(R.layout.dialog_batch_tag, null);
+        android.view.View dialogView =
+                getLayoutInflater().inflate(R.layout.dialog_batch_tag, null);
 
         AutoCompleteTextView tagInput =
                 dialogView.findViewById(R.id.tagInput);
@@ -184,26 +186,21 @@ public class AlbumContentsActivity extends AppCompatActivity {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
 
-            java.util.List<String> keywords =
-                    dao.getAllKeywordNames();
+            List<String> keywords = dao.getAllKeywordNames();
 
             runOnUiThread(() -> {
-
                 ArrayAdapter<String> adapter =
                         new ArrayAdapter<>(
                                 this,
                                 android.R.layout.simple_dropdown_item_1line,
                                 keywords
                         );
-
                 tagInput.setAdapter(adapter);
             });
 
         }).start();
 
-
-
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Apply", (dialog, which) -> {
@@ -219,16 +216,19 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
     private void applyKeywordToSelected(String keyword) {
 
+        final String normalized = keyword.trim().toLowerCase();
+        if (normalized.isEmpty()) return;
+
         new Thread(() -> {
 
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
 
-            KeywordEntity keywordEntity = dao.getKeywordByName(keyword);
+            KeywordEntity keywordEntity = dao.getKeywordByName(normalized);
 
             if (keywordEntity == null) {
-                dao.insertKeyword(new KeywordEntity(keyword, 0));
-                keywordEntity = dao.getKeywordByName(keyword);
+                dao.insertKeyword(new KeywordEntity(normalized, 0));
+                keywordEntity = dao.getKeywordByName(normalized);
             }
 
             if (keywordEntity == null) return;
@@ -253,6 +253,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 );
             }
 
+            dao.incrementUsage(keywordEntity.id);
+
             runOnUiThread(() -> {
                 adapter.clearSelection();
                 android.widget.Toast.makeText(
@@ -264,4 +266,17 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         }).start();
     }
+
+    private void loadSearchResults(ArrayList<String> uriStrings) {
+
+        images.clear();
+
+        for (String uriString : uriStrings) {
+
+            Uri uri = Uri.parse(uriString);
+
+            images.add(new ImageItem(0, uri));
+        }
+    }
+
 }
