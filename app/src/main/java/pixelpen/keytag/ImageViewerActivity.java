@@ -67,6 +67,34 @@ public class ImageViewerActivity extends AppCompatActivity {
         exifPanel = findViewById(R.id.exifPanel);
         exifText = findViewById(R.id.exifText);
 
+        ViewCompat.setOnApplyWindowInsetsListener(
+                findViewById(android.R.id.content),
+                (view, insets) -> {
+
+                    int topInset = insets.getInsets(
+                            android.view.WindowInsets.Type.statusBars()
+                    ).top;
+
+                    int offset = topInset + dpToPx(48);
+
+                    keywordChipGroup.setPadding(
+                            keywordChipGroup.getPaddingLeft(),
+                            offset,
+                            keywordChipGroup.getPaddingRight(),
+                            keywordChipGroup.getPaddingBottom()
+                    );
+
+                    exifPanel.setPadding(
+                            exifPanel.getPaddingLeft(),
+                            offset,
+                            exifPanel.getPaddingRight(),
+                            exifPanel.getPaddingBottom()
+                    );
+
+                    return insets;
+                }
+        );
+
 
 
 
