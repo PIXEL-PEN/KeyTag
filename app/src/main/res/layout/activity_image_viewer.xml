@@ -22,6 +22,29 @@
         app:singleLine="false"
         app:chipSpacing="8dp"/>
 
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/exifPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:layout_gravity="top"
+        android:visibility="gone"
+        android:backgroundTint="#CC2A2A2A"
+        app:cardElevation="6dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#33FFFFFF">
+
+        <TextView
+            android:id="@+id/exifText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:padding="12dp"
+            android:textSize="13sp" />
+    </com.google.android.material.card.MaterialCardView>
+
+
+
     <!-- Keyword Panel -->
     <LinearLayout
         android:id="@+id/keywordPanel"

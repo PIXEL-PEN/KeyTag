@@ -19,6 +19,10 @@ import pixelpen.keytag.db.ImageEntity;
 import pixelpen.keytag.db.KeywordEntity;
 import pixelpen.keytag.db.ImageKeywordCrossRef;
 
+import androidx.core.view.ViewCompat;
+
+import android.widget.FrameLayout;
+
 public class ImageViewerActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
@@ -31,6 +35,12 @@ public class ImageViewerActivity extends AppCompatActivity {
     private ArrayList<String> imageList;
 
     private com.google.android.material.chip.ChipGroup keywordChipGroup;
+
+
+    private View exifPanel;
+    private TextView exifText;
+    private boolean isExifVisible = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +63,28 @@ public class ImageViewerActivity extends AppCompatActivity {
         keywordInput = findViewById(R.id.keywordInput);
         saveKeyword = findViewById(R.id.saveKeyword);
         keywordChipGroup = findViewById(R.id.keywordChipGroup);
+
+        exifPanel = findViewById(R.id.exifPanel);
+        exifText = findViewById(R.id.exifText);
+
+
+
+
+        ViewCompat.setOnApplyWindowInsetsListener(exifPanel, (view, insets) -> {
+
+            int topInset = insets.getInsets(
+                    android.view.WindowInsets.Type.statusBars()
+            ).top;
+
+            FrameLayout.LayoutParams params =
+                    (FrameLayout.LayoutParams) view.getLayoutParams();
+
+            params.topMargin = topInset + dpToPx(36);
+            view.setLayoutParams(params);
+
+            return insets;
+        });
+
 
         imageList = getIntent().getStringArrayListExtra("image_list");
         int startPosition = getIntent().getIntExtra("start_position", 0);
@@ -187,7 +219,6 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         }).start();
     }
-
     private void confirmRemoveKeyword(long imageId, long keywordId) {
 
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
@@ -199,6 +230,7 @@ public class ImageViewerActivity extends AppCompatActivity {
                 .show();
     }
 
+
     private void removeKeywordFromImage(long imageId, long keywordId) {
 
         new Thread(() -> {
@@ -206,10 +238,11 @@ public class ImageViewerActivity extends AppCompatActivity {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
 
+            // Remove relation
             dao.removeCrossRef(imageId, keywordId);
-            dao.decrementUsage(keywordId);
 
-            int remaining = dao.getUsageCount(keywordId);
+            // Check real usage from crossref table
+            int remaining = dao.getKeywordUsageFromCrossRef(keywordId);
 
             if (remaining <= 0) {
                 dao.deleteKeywordById(keywordId);
@@ -230,4 +263,72 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         }).start();
     }
+
+    public void toggleExifPanel(String uriString) {
+
+        if (isExifVisible) {
+            exifPanel.setVisibility(View.GONE);
+            isExifVisible = false;
+            return;
+        }
+
+        loadExif(uriString);
+        exifPanel.setVisibility(View.VISIBLE);
+        isExifVisible = true;
+    }
+
+    private void loadExif(String uriString) {
+
+        try {
+
+            android.net.Uri uri = android.net.Uri.parse(uriString);
+
+            androidx.exifinterface.media.ExifInterface exif =
+                    new androidx.exifinterface.media.ExifInterface(
+                            getContentResolver().openInputStream(uri)
+                    );
+
+            String make = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE);
+            String model = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL);
+            String iso = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_ISO_SPEED_RATINGS);
+            String exposure = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME);
+            String aperture = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER);
+            String focal = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH);
+            String date = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
+
+            StringBuilder builder = new StringBuilder();
+
+            if (make != null || model != null)
+                builder.append(make != null ? make : "")
+                        .append(" ")
+                        .append(model != null ? model : "")
+                        .append("\n");
+
+            if (iso != null)
+                builder.append("ISO ").append(iso).append("\n");
+
+            if (exposure != null)
+                builder.append("Shutter ").append(exposure).append(" sec\n");
+
+            if (aperture != null)
+                builder.append("f/").append(aperture).append("\n");
+
+            if (focal != null)
+                builder.append("Focal ").append(focal).append(" mm\n");
+
+            if (date != null)
+                builder.append("Date ").append(date);
+
+            exifText.setText(builder.toString());
+
+        } catch (Exception e) {
+            exifText.setText("No EXIF data available");
+        }
+    }
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
+
 }

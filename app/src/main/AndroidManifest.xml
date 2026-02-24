@@ -33,7 +33,20 @@
             android:exported="false" />
 
         <activity android:name=".ImageViewerActivity"/>
+        <activity
+            android:name=".ShareTagActivity"
+            android:exported="true">
 
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+        </activity>
 
 
     </application>

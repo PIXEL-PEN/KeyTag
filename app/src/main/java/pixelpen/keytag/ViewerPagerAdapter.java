@@ -49,12 +49,23 @@ public class ViewerPagerAdapter extends RecyclerView.Adapter<ViewerPagerAdapter.
                 .into(holder.photoView);
 
         holder.photoView.setOnPhotoTapListener((view, x, y) -> {
+
             if (view.getContext() instanceof ImageViewerActivity) {
-                ((ImageViewerActivity) view.getContext()).toggleSystemUi();
+
+                ImageViewerActivity activity =
+                        (ImageViewerActivity) view.getContext();
+
+                activity.toggleSystemUi();
+
+                int currentPos = holder.getBindingAdapterPosition();
+                if (currentPos != RecyclerView.NO_POSITION) {
+                    activity.toggleExifPanel(
+                            imageUris.get(currentPos)
+                    );
+                }
             }
         });
     }
-
 
     @Override
     public int getItemCount() {

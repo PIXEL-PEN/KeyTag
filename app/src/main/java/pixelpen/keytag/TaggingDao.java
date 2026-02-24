@@ -66,4 +66,8 @@ public interface TaggingDao {
             "INNER JOIN keywords k ON k.id = ik.keywordId " +
             "WHERE k.name = :keyword")
     List<String> getImageUrisForKeyword(String keyword);
+
+    @Query("SELECT COUNT(*) FROM image_keywords WHERE keywordId = :keywordId")
+    int getKeywordUsageFromCrossRef(long keywordId);
+
 }
