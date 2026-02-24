@@ -24,25 +24,27 @@
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/exifPanel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="12dp"
-        android:layout_gravity="top"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
         android:visibility="gone"
         android:backgroundTint="#99353535"
-        app:cardElevation="6dp"
-        app:strokeWidth="1dp"
-        app:strokeColor="#33FFFFFF">
+        app:cardElevation="8dp">
 
-        <TextView
-            android:id="@+id/exifText"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:padding="12dp"
-            android:textSize="13sp" />
-    </com.google.android.material.card.MaterialCardView>
+            android:layout_height="match_parent">
 
+            <TextView
+                android:id="@+id/exifText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:textColor="#F2F2F2"
+                android:textSize="13sp"/>
+        </ScrollView>
+
+    </com.google.android.material.card.MaterialCardView>
 
 
     <!-- Keyword Panel -->

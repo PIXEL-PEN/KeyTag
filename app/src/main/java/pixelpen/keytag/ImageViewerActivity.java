@@ -65,6 +65,22 @@ public class ImageViewerActivity extends AppCompatActivity {
         keywordChipGroup = findViewById(R.id.keywordChipGroup);
 
         exifPanel = findViewById(R.id.exifPanel);
+
+        exifPanel.post(() -> {
+
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            int panelWidth = screenWidth / 3; // exactly 1/3 screen
+
+            FrameLayout.LayoutParams params =
+                    (FrameLayout.LayoutParams) exifPanel.getLayoutParams();
+
+            params.width = panelWidth;
+            exifPanel.setLayoutParams(params);
+
+            exifPanel.setTranslationX(panelWidth);
+        });
+
+
         exifText = findViewById(R.id.exifText);
 
         ViewCompat.setOnApplyWindowInsetsListener(
@@ -294,17 +310,31 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     public void toggleExifPanel(String uriString) {
 
+        int panelWidth = exifPanel.getWidth();
+
         if (isExifVisible) {
-            exifPanel.setVisibility(View.GONE);
+
+            exifPanel.animate()
+                    .translationX(panelWidth)
+                    .setDuration(250)
+                    .withEndAction(() -> exifPanel.setVisibility(View.GONE));
+
             isExifVisible = false;
-            return;
+
+        } else {
+
+            loadExif(uriString);
+
+            exifPanel.setVisibility(View.VISIBLE);
+            exifPanel.setTranslationX(panelWidth);
+
+            exifPanel.animate()
+                    .translationX(0)
+                    .setDuration(250);
+
+            isExifVisible = true;
         }
-
-        loadExif(uriString);
-        exifPanel.setVisibility(View.VISIBLE);
-        isExifVisible = true;
     }
-
     private void loadExif(String uriString) {
 
         try {
