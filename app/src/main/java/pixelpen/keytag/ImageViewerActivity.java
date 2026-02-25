@@ -23,6 +23,13 @@ import androidx.core.view.ViewCompat;
 
 import android.widget.FrameLayout;
 
+import android.widget.ImageView;
+import android.net.Uri;
+import android.content.Intent;
+import android.database.Cursor;
+import android.provider.MediaStore;
+import android.graphics.Color;
+
 public class ImageViewerActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
@@ -46,6 +53,52 @@ public class ImageViewerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_image_viewer);
+
+        ImageView btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> finish());
+
+        ImageView btnShare = findViewById(R.id.btnShare);
+
+        btnShare.setOnClickListener(v -> {
+
+            if (imageList == null || imageList.isEmpty()) return;
+
+            int position = viewPager.getCurrentItem();
+            if (position < 0 || position >= imageList.size()) return;
+
+            Uri currentUri = Uri.parse(imageList.get(position));
+
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("image/*");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, currentUri);
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(Intent.createChooser(shareIntent, "Share Image"));
+        });
+
+        ImageView btnOpen = findViewById(R.id.btnOpen);
+
+        btnOpen.setOnClickListener(v -> {
+
+            if (imageList == null || imageList.isEmpty()) return;
+
+            int position = viewPager.getCurrentItem();
+            if (position < 0 || position >= imageList.size()) return;
+
+            Uri currentUri = Uri.parse(imageList.get(position));
+
+            Intent viewIntent = new Intent(Intent.ACTION_VIEW);
+            viewIntent.setDataAndType(currentUri, "image/*");
+            viewIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            startActivity(viewIntent);
+        });
+
+
+
+        View overlay = findViewById(R.id.uiOverlayContainer);
+
+        ViewCompat.setOnApplyWindowInsetsListener(overlay, (v, insets) -> insets);
 
         // Immersive mode
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
@@ -312,21 +365,21 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         int panelWidth = exifPanel.getWidth();
 
+        if (panelWidth == 0) {
+            panelWidth = (int) (280 * getResources().getDisplayMetrics().density);
+        }
+
         if (isExifVisible) {
 
             exifPanel.animate()
                     .translationX(panelWidth)
-                    .setDuration(250)
-                    .withEndAction(() -> exifPanel.setVisibility(View.GONE));
+                    .setDuration(250);
 
             isExifVisible = false;
 
         } else {
 
             loadExif(uriString);
-
-            exifPanel.setVisibility(View.VISIBLE);
-            exifPanel.setTranslationX(panelWidth);
 
             exifPanel.animate()
                     .translationX(0)

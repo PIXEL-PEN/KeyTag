@@ -12,113 +12,133 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
-        android:id="@+id/topOverlayBar"
+    <FrameLayout
+        android:id="@+id/uiOverlayContainer"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_gravity="top"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="8dp"
-        android:paddingEnd="8dp"
-        android:background="#66000000"
-        android:elevation="12dp">
+        android:layout_height="match_parent">
 
-        <ImageView
-            android:id="@+id/btnBack"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/baseline_arrow_back_24"
-            android:tint="@android:color/white" />
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
-
-        <ImageView
-            android:id="@+id/btnStar"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/baseline_star_border_24"
-            android:tint="@android:color/white" />
-
-        <ImageView
-            android:id="@+id/btnShare"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:padding="8dp"
-            android:src="@drawable/baseline_share_24"
-            android:tint="@android:color/white" />
-
-    </LinearLayout>
-
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/keywordChipGroup"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
-        android:layout_marginStart="12dp"
-        android:layout_marginEnd="12dp"
-        android:padding="4dp"
-        app:singleLine="false"
-        app:chipSpacing="8dp"/>
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/exifPanel"
-        android:layout_width="280dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="end"
-        android:visibility="gone"
-        android:backgroundTint="#99353535"
-        app:cardElevation="8dp">
-
-        <ScrollView
+        <LinearLayout
+            android:id="@+id/topOverlayBar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="48dp"
+            android:layout_gravity="top"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:background="#66000000"
+            android:elevation="12dp">
+
+            <ImageView
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/baseline_arrow_back_24"
+                android:tint="@android:color/white" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/btnStar"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/baseline_star_border_24"
+                android:tint="@android:color/white" />
+
+            <ImageView
+                android:id="@+id/btnOpen"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="12dp"
+                android:padding="8dp"
+                android:src="@drawable/baseline_open_in_new_24"
+                android:tint="@android:color/white" />
+
+            <ImageView
+                android:id="@+id/btnShare"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="12dp"
+                android:padding="8dp"
+                android:src="@drawable/baseline_share_24"
+                android:tint="@android:color/white" />
+        </LinearLayout>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/keywordChipGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top"
+            android:layout_marginTop="48dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:padding="4dp"
+            app:singleLine="false"
+            app:chipSpacing="8dp"/>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/exifPanel"
+            android:layout_width="280dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:visibility="visible"
+            android:translationX="280dp"
+            android:backgroundTint="#99353535"
+            app:cardElevation="8dp">
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingTop="48dp"
+                android:clipToPadding="false">
+                <TextView
+                    android:id="@+id/exifText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:textColor="#F2F2F2"
+                    android:textSize="13sp"/>
+            </ScrollView>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:id="@+id/keywordPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#DD000000"
+            android:padding="12dp"
+            android:layout_gravity="bottom"
+            android:visibility="gone">
+
+            <EditText
+                android:id="@+id/keywordInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Add keyword"
+                android:textColor="@android:color/white"
+                android:textColorHint="#88FFFFFF"
+                android:background="@android:color/transparent" />
 
             <TextView
-                android:id="@+id/exifText"
-                android:layout_width="match_parent"
+                android:id="@+id/saveKeyword"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="16dp"
-                android:textColor="#F2F2F2"
-                android:textSize="13sp"/>
-        </ScrollView>
+                android:text="SAVE"
+                android:textColor="#4DA3FF"
+                android:paddingStart="12dp"
+                android:paddingEnd="4dp"
+                android:textStyle="bold"/>
 
-    </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/keywordPanel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="#DD000000"
-        android:padding="12dp"
-        android:layout_gravity="bottom"
-        android:visibility="gone">
-
-        <EditText
-            android:id="@+id/keywordInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="Add keyword"
-            android:textColor="@android:color/white"
-            android:textColorHint="#88FFFFFF"
-            android:background="@android:color/transparent" />
-
-        <TextView
-            android:id="@+id/saveKeyword"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SAVE"
-            android:textColor="#4DA3FF"
-            android:paddingStart="12dp"
-            android:paddingEnd="4dp"
-            android:textStyle="bold"/>
-    </LinearLayout>
+    </FrameLayout>
 
 </FrameLayout>
