@@ -30,6 +30,8 @@ import android.database.Cursor;
 import android.provider.MediaStore;
 import android.graphics.Color;
 
+import android.content.ContentValues;
+
 public class ImageViewerActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
@@ -93,6 +95,22 @@ public class ImageViewerActivity extends AppCompatActivity {
 
             startActivity(viewIntent);
         });
+
+        ImageView btnStar = findViewById(R.id.btnStar);
+
+        btnStar.setOnClickListener(v -> {
+
+            if (imageList == null || imageList.isEmpty()) return;
+
+            int position = viewPager.getCurrentItem();
+            if (position < 0 || position >= imageList.size()) return;
+
+            Uri currentUri = Uri.parse(imageList.get(position));
+
+            toggleFavorite(currentUri);
+            updateStarIcon(currentUri);
+        });
+
 
 
 
@@ -197,15 +215,18 @@ public class ImageViewerActivity extends AppCompatActivity {
             String currentUri = imageList.get(startPosition);
             loadKeywordsForImage(currentUri);
         }
-
         viewPager.registerOnPageChangeCallback(
                 new ViewPager2.OnPageChangeCallback() {
                     @Override
                     public void onPageSelected(int position) {
-                        if (imageList != null) {
-                            String uri = imageList.get(position);
-                            loadKeywordsForImage(uri);
-                        }
+
+                        if (imageList == null || position < 0 || position >= imageList.size())
+                            return;
+
+                        String uri = imageList.get(position);
+
+                        loadKeywordsForImage(uri);
+                        updateStarIcon(Uri.parse(uri));
                     }
                 });
 
@@ -441,5 +462,93 @@ public class ImageViewerActivity extends AppCompatActivity {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
     }
+
+    private boolean isFavorite(Uri uri) {
+
+        String[] projection = {
+                MediaStore.Images.Media.IS_FAVORITE
+        };
+
+        try (Cursor cursor = getContentResolver().query(
+                uri,
+                projection,
+                null,
+                null,
+                null)) {
+
+            if (cursor != null && cursor.moveToFirst()) {
+
+                int columnIndex =
+                        cursor.getColumnIndexOrThrow(
+                                MediaStore.Images.Media.IS_FAVORITE
+                        );
+
+                return cursor.getInt(columnIndex) == 1;
+            }
+        }
+
+        return false;
+    }
+    private void updateStarIcon(Uri uri) {
+
+        ImageView btnStar = findViewById(R.id.btnStar);
+
+        if (isFavorite(uri)) {
+            btnStar.setImageResource(R.drawable.baseline_star_24);
+            btnStar.setColorFilter(Color.parseColor("#FFC107"));
+        } else {
+            btnStar.setImageResource(R.drawable.baseline_star_border_24);
+            btnStar.setColorFilter(Color.WHITE);
+        }
+    }
+    private void toggleFavorite(Uri uri) {
+
+        boolean currentlyFavorite = isFavorite(uri);
+
+        ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.Images.Media.IS_FAVORITE,
+                currentlyFavorite ? 0 : 1
+        );
+
+        try {
+
+            getContentResolver().update(uri, values, null, null);
+
+        } catch (android.app.RecoverableSecurityException e) {
+
+            try {
+                startIntentSenderForResult(
+                        e.getUserAction().getActionIntent().getIntentSender(),
+                        1001,
+                        null,
+                        0,
+                        0,
+                        0,
+                        null
+                );
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+
+            int position = viewPager.getCurrentItem();
+
+            if (imageList != null && position >= 0 && position < imageList.size()) {
+
+                Uri uri = Uri.parse(imageList.get(position));
+
+                toggleFavorite(uri);  // retry update
+                updateStarIcon(uri);
+            }
+        }
+    }
+
 
 }
