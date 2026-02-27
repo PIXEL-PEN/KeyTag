@@ -17,8 +17,11 @@ public class ImageEntity {
 
     public long dateTagged;
 
+    public int qualityLevel;   // 0–3 rating (default 0)
+
     public ImageEntity(String uri, long dateTagged) {
         this.uri = uri;
         this.dateTagged = dateTagged;
+        this.qualityLevel = 0;  // default value
     }
 }

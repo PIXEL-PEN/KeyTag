@@ -70,4 +70,13 @@ public interface TaggingDao {
     @Query("SELECT COUNT(*) FROM image_keywords WHERE keywordId = :keywordId")
     int getKeywordUsageFromCrossRef(long keywordId);
 
+    // Update quality level
+    @Query("UPDATE images SET qualityLevel = :level WHERE uri = :uri")
+    void updateQuality(String uri, int level);
+
+    // Get quality level
+    @Query("SELECT qualityLevel FROM images WHERE uri = :uri LIMIT 1")
+    Integer getQuality(String uri);
+
+
 }

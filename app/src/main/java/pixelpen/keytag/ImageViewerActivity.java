@@ -26,11 +26,11 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.net.Uri;
 import android.content.Intent;
-import android.database.Cursor;
-import android.provider.MediaStore;
+
+
 import android.graphics.Color;
 
-import android.content.ContentValues;
+
 
 public class ImageViewerActivity extends AppCompatActivity {
 
@@ -49,7 +49,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private View exifPanel;
     private TextView exifText;
     private boolean isExifVisible = false;
-    private boolean localStarState = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -218,11 +218,7 @@ public class ImageViewerActivity extends AppCompatActivity {
                         String uri = imageList.get(position);
 
                         loadKeywordsForImage(uri);
-
-                        // Reset local star state when changing images
-                        localStarState = false;
-
-                        updateStarIcon();
+                        loadQualityForImage(uri);
                     }
                 });
 
@@ -459,19 +455,42 @@ public class ImageViewerActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
-
-
-
     private void toggleFavorite() {
-        localStarState = !localStarState;
-        updateStarIcon();
+
+        int position = viewPager.getCurrentItem();
+        if (imageList == null || position < 0 || position >= imageList.size())
+            return;
+
+        String uri = imageList.get(position);
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            ImageEntity image = dao.getImageByUri(uri);
+
+            if (image == null) {
+                dao.insertImage(new ImageEntity(uri, System.currentTimeMillis()));
+                image = dao.getImageByUri(uri);
+            }
+
+            int current = image.qualityLevel;
+            int newLevel = current == 1 ? 0 : 1;
+
+            dao.updateQuality(uri, newLevel);
+
+            runOnUiThread(() -> updateStarIconForLevel(newLevel));
+
+        }).start();
     }
 
-    private void updateStarIcon() {
+
+    private void updateStarIconForLevel(int level) {
 
         ImageView btnStar = findViewById(R.id.btnStar);
 
-        if (localStarState) {
+        if (level > 0) {
             btnStar.setImageResource(R.drawable.baseline_star_24);
             btnStar.setColorFilter(Color.parseColor("#FFC107"));
         } else {
@@ -480,25 +499,26 @@ public class ImageViewerActivity extends AppCompatActivity {
         }
     }
 
+    private void loadQualityForImage(String uri) {
 
+        new Thread(() -> {
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
 
-        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            Integer level = dao.getQuality(uri);
 
-            int position = viewPager.getCurrentItem();
-
-            if (imageList != null && position >= 0 && position < imageList.size()) {
-
-                Uri uri = Uri.parse(imageList.get(position));
-
-                toggleFavorite(); // retry update
-                updateStarIcon();
+            if (level == null) {
+                level = 0;
             }
-        }
+
+            int finalLevel = level;
+
+            runOnUiThread(() -> updateStarIconForLevel(finalLevel));
+
+        }).start();
     }
+
 
 
 }
