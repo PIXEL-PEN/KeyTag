@@ -493,17 +493,20 @@ public class ImageViewerActivity extends AppCompatActivity {
         int filled = R.drawable.baseline_star_24;
         int empty  = R.drawable.baseline_star_border_24;
 
+        int gold = Color.parseColor("#FFC107");
+        int white = Color.WHITE;
+
+        // Star 1
         star1.setImageResource(level >= 1 ? filled : empty);
+        star1.setColorFilter(level >= 1 ? gold : white);
+
+        // Star 2
         star2.setImageResource(level >= 2 ? filled : empty);
+        star2.setColorFilter(level >= 2 ? gold : white);
+
+        // Star 3
         star3.setImageResource(level >= 3 ? filled : empty);
-
-        int color = level > 0
-                ? Color.parseColor("#FFC107")
-                : Color.WHITE;
-
-        star1.setColorFilter(color);
-        star2.setColorFilter(color);
-        star3.setColorFilter(color);
+        star3.setColorFilter(level >= 3 ? gold : white);
     }
     private void loadQualityForImage(String uri) {
 
