@@ -49,7 +49,7 @@ public class ImageViewerActivity extends AppCompatActivity {
     private View exifPanel;
     private TextView exifText;
     private boolean isExifVisible = false;
-
+    private boolean localStarState = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,16 +99,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         ImageView btnStar = findViewById(R.id.btnStar);
 
         btnStar.setOnClickListener(v -> {
-
-            if (imageList == null || imageList.isEmpty()) return;
-
-            int position = viewPager.getCurrentItem();
-            if (position < 0 || position >= imageList.size()) return;
-
-            Uri currentUri = Uri.parse(imageList.get(position));
-
-            toggleFavorite(currentUri);
-            updateStarIcon(currentUri);
+            toggleFavorite();
         });
 
 
@@ -217,7 +208,8 @@ public class ImageViewerActivity extends AppCompatActivity {
         }
         viewPager.registerOnPageChangeCallback(
                 new ViewPager2.OnPageChangeCallback() {
-                    @Override
+
+
                     public void onPageSelected(int position) {
 
                         if (imageList == null || position < 0 || position >= imageList.size())
@@ -226,7 +218,11 @@ public class ImageViewerActivity extends AppCompatActivity {
                         String uri = imageList.get(position);
 
                         loadKeywordsForImage(uri);
-                        updateStarIcon(Uri.parse(uri));
+
+                        // Reset local star state when changing images
+                        localStarState = false;
+
+                        updateStarIcon();
                     }
                 });
 
@@ -463,37 +459,19 @@ public class ImageViewerActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
-    private boolean isFavorite(Uri uri) {
 
-        String[] projection = {
-                MediaStore.Images.Media.IS_FAVORITE
-        };
 
-        try (Cursor cursor = getContentResolver().query(
-                uri,
-                projection,
-                null,
-                null,
-                null)) {
 
-            if (cursor != null && cursor.moveToFirst()) {
-
-                int columnIndex =
-                        cursor.getColumnIndexOrThrow(
-                                MediaStore.Images.Media.IS_FAVORITE
-                        );
-
-                return cursor.getInt(columnIndex) == 1;
-            }
-        }
-
-        return false;
+    private void toggleFavorite() {
+        localStarState = !localStarState;
+        updateStarIcon();
     }
-    private void updateStarIcon(Uri uri) {
+
+    private void updateStarIcon() {
 
         ImageView btnStar = findViewById(R.id.btnStar);
 
-        if (isFavorite(uri)) {
+        if (localStarState) {
             btnStar.setImageResource(R.drawable.baseline_star_24);
             btnStar.setColorFilter(Color.parseColor("#FFC107"));
         } else {
@@ -501,37 +479,9 @@ public class ImageViewerActivity extends AppCompatActivity {
             btnStar.setColorFilter(Color.WHITE);
         }
     }
-    private void toggleFavorite(Uri uri) {
 
-        boolean currentlyFavorite = isFavorite(uri);
 
-        ContentValues values = new ContentValues();
-        values.put(
-                MediaStore.Images.Media.IS_FAVORITE,
-                currentlyFavorite ? 0 : 1
-        );
 
-        try {
-
-            getContentResolver().update(uri, values, null, null);
-
-        } catch (android.app.RecoverableSecurityException e) {
-
-            try {
-                startIntentSenderForResult(
-                        e.getUserAction().getActionIntent().getIntentSender(),
-                        1001,
-                        null,
-                        0,
-                        0,
-                        0,
-                        null
-                );
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -544,8 +494,8 @@ public class ImageViewerActivity extends AppCompatActivity {
 
                 Uri uri = Uri.parse(imageList.get(position));
 
-                toggleFavorite(uri);  // retry update
-                updateStarIcon(uri);
+                toggleFavorite(); // retry update
+                updateStarIcon();
             }
         }
     }
