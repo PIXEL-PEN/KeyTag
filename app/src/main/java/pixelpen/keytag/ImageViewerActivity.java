@@ -30,7 +30,7 @@ import android.content.Intent;
 
 import android.graphics.Color;
 
-
+import android.widget.LinearLayout;
 
 public class ImageViewerActivity extends AppCompatActivity {
 
@@ -95,13 +95,11 @@ public class ImageViewerActivity extends AppCompatActivity {
 
             startActivity(viewIntent);
         });
+        LinearLayout starContainer = findViewById(R.id.starContainer);
 
-        ImageView btnStar = findViewById(R.id.btnStar);
-
-        btnStar.setOnClickListener(v -> {
+        starContainer.setOnClickListener(v -> {
             toggleFavorite();
         });
-
 
 
 
@@ -476,7 +474,7 @@ public class ImageViewerActivity extends AppCompatActivity {
             }
 
             int current = image.qualityLevel;
-            int newLevel = current == 1 ? 0 : 1;
+            int newLevel = (current + 1) % 4;
 
             dao.updateQuality(uri, newLevel);
 
@@ -488,17 +486,25 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private void updateStarIconForLevel(int level) {
 
-        ImageView btnStar = findViewById(R.id.btnStar);
+        ImageView star1 = findViewById(R.id.star1);
+        ImageView star2 = findViewById(R.id.star2);
+        ImageView star3 = findViewById(R.id.star3);
 
-        if (level > 0) {
-            btnStar.setImageResource(R.drawable.baseline_star_24);
-            btnStar.setColorFilter(Color.parseColor("#FFC107"));
-        } else {
-            btnStar.setImageResource(R.drawable.baseline_star_border_24);
-            btnStar.setColorFilter(Color.WHITE);
-        }
+        int filled = R.drawable.baseline_star_24;
+        int empty  = R.drawable.baseline_star_border_24;
+
+        star1.setImageResource(level >= 1 ? filled : empty);
+        star2.setImageResource(level >= 2 ? filled : empty);
+        star3.setImageResource(level >= 3 ? filled : empty);
+
+        int color = level > 0
+                ? Color.parseColor("#FFC107")
+                : Color.WHITE;
+
+        star1.setColorFilter(color);
+        star2.setColorFilter(color);
+        star3.setColorFilter(color);
     }
-
     private void loadQualityForImage(String uri) {
 
         new Thread(() -> {
