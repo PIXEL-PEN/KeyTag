@@ -25,6 +25,7 @@ import pixelpen.keytag.db.TaggingDao;
 import pixelpen.keytag.db.ImageEntity;
 import pixelpen.keytag.db.KeywordEntity;
 import pixelpen.keytag.db.ImageKeywordCrossRef;
+import android.widget.ImageView;
 
 public class AlbumContentsActivity extends AppCompatActivity {
 
@@ -181,6 +182,18 @@ public class AlbumContentsActivity extends AppCompatActivity {
         AutoCompleteTextView tagInput =
                 dialogView.findViewById(R.id.tagInput);
 
+        // Rating state
+        final int[] rating = {0};
+
+        // Setup dialog stars
+        android.view.View ratingRow = dialogView.findViewById(R.id.ratingRow);
+
+        ratingRow.setOnClickListener(v -> {
+            rating[0] = (rating[0] + 1) % 4;
+            updateDialogStars(dialogView, rating[0]);
+        });
+
+        // Load autocomplete keywords
         new Thread(() -> {
 
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
@@ -207,31 +220,33 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
                     String keyword = tagInput.getText().toString().trim();
 
-                    if (!keyword.isEmpty()) {
-                        applyKeywordToSelected(keyword);
-                    }
+                    applyMetadataToSelected(keyword, rating[0]);
+
                 })
                 .show();
     }
+    private void applyMetadataToSelected(String keyword, int rating) {
 
-    private void applyKeywordToSelected(String keyword) {
-
-        final String normalized = keyword.trim().toLowerCase();
-        if (normalized.isEmpty()) return;
+        final String normalized = keyword == null
+                ? ""
+                : keyword.trim().toLowerCase();
 
         new Thread(() -> {
 
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
 
-            KeywordEntity keywordEntity = dao.getKeywordByName(normalized);
+            KeywordEntity keywordEntity = null;
 
-            if (keywordEntity == null) {
-                dao.insertKeyword(new KeywordEntity(normalized, 0));
+            if (!normalized.isEmpty()) {
+
                 keywordEntity = dao.getKeywordByName(normalized);
-            }
 
-            if (keywordEntity == null) return;
+                if (keywordEntity == null) {
+                    dao.insertKeyword(new KeywordEntity(normalized, 0));
+                    keywordEntity = dao.getKeywordByName(normalized);
+                }
+            }
 
             for (ImageItem item : images) {
 
@@ -248,25 +263,32 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
                 if (image == null) continue;
 
-                dao.insertCrossRef(
-                        new ImageKeywordCrossRef(image.id, keywordEntity.id)
-                );
+                // Apply rating
+                dao.updateQuality(uriString, rating);
+
+                // Apply keyword (if provided)
+                if (keywordEntity != null) {
+                    dao.insertCrossRef(
+                            new ImageKeywordCrossRef(image.id, keywordEntity.id)
+                    );
+                }
             }
 
-            dao.incrementUsage(keywordEntity.id);
+            if (keywordEntity != null) {
+                dao.incrementUsage(keywordEntity.id);
+            }
 
             runOnUiThread(() -> {
                 adapter.clearSelection();
                 android.widget.Toast.makeText(
                         this,
-                        "Keyword applied",
+                        "Metadata applied",
                         android.widget.Toast.LENGTH_SHORT
                 ).show();
             });
 
         }).start();
     }
-
     private void loadSearchResults(ArrayList<String> uriStrings) {
 
         images.clear();
@@ -278,5 +300,25 @@ public class AlbumContentsActivity extends AppCompatActivity {
             images.add(new ImageItem(0, uri));
         }
     }
+    private void updateDialogStars(android.view.View dialogView, int level) {
 
+        ImageView star1 = dialogView.findViewById(R.id.dialogStar1);
+        ImageView star2 = dialogView.findViewById(R.id.dialogStar2);
+        ImageView star3 = dialogView.findViewById(R.id.dialogStar3);
+
+        int filled = R.drawable.baseline_star_24;
+        int empty  = R.drawable.baseline_star_border_24;
+
+        int gold = android.graphics.Color.parseColor("#FFC107");
+        int white = android.graphics.Color.WHITE;
+
+        star1.setImageResource(level >= 1 ? filled : empty);
+        star1.setColorFilter(level >= 1 ? gold : white);
+
+        star2.setImageResource(level >= 2 ? filled : empty);
+        star2.setColorFilter(level >= 2 ? gold : white);
+
+        star3.setImageResource(level >= 3 ? filled : empty);
+        star3.setColorFilter(level >= 3 ? gold : white);
+    }
 }
