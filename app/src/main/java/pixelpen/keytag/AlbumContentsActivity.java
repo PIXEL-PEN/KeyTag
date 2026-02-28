@@ -40,12 +40,18 @@ public class AlbumContentsActivity extends AppCompatActivity {
     private final int MIN_SPAN = 2;
     private final int MAX_SPAN = 6;
 
+
+    private boolean shareMode = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ArrayList<String> searchUris =
                 getIntent().getStringArrayListExtra("search_results");
 
+
+        boolean shareMode =
+                getIntent().getBooleanExtra("share_mode", false);
 
         getWindow().setDecorFitsSystemWindows(true);
         setContentView(R.layout.activity_album_contents);
@@ -101,6 +107,14 @@ public class AlbumContentsActivity extends AppCompatActivity {
         });
 
         recyclerView.setAdapter(adapter);
+        if (shareMode) {
+            recyclerView.post(() -> {
+                adapter.selectAll();
+                showBatchTagDialog();
+            });
+        }
+
+
         recyclerView.setHasFixedSize(true);
 
         // Grid pinch zoom

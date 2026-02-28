@@ -141,4 +141,16 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
         }
     }
 
+    public void selectAll() {
+        for (ImageItem item : images) {
+            item.isSelected = true;
+        }
+        selectionMode = true;
+        notifyDataSetChanged();
+
+        if (selectionListener != null) {
+            selectionListener.onSelectionChanged(getSelectedCount());
+        }
+    }
+
 }
