@@ -46,12 +46,14 @@ public class AlbumContentsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         ArrayList<String> searchUris =
                 getIntent().getStringArrayListExtra("search_results");
 
-
         boolean shareMode =
                 getIntent().getBooleanExtra("share_mode", false);
+
+        android.util.Log.d("SHARE_DEBUG", "shareMode = " + shareMode);
 
         getWindow().setDecorFitsSystemWindows(true);
         setContentView(R.layout.activity_album_contents);
@@ -100,22 +102,21 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 });
 
             } else {
-
                 toolbar.setTitle(bucketName);
                 toolbar.setNavigationIcon(null);
             }
         });
 
         recyclerView.setAdapter(adapter);
-        if (shareMode) {
+        recyclerView.setHasFixedSize(true);
+
+        // 🔥 Share mode auto-launch dialog AFTER adapter ready
+        if (shareMode && searchUris != null && !searchUris.isEmpty()) {
             recyclerView.post(() -> {
                 adapter.selectAll();
                 showBatchTagDialog();
             });
         }
-
-
-        recyclerView.setHasFixedSize(true);
 
         // Grid pinch zoom
         ScaleGestureDetector scaleDetector =
