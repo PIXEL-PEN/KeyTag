@@ -11,4 +11,38 @@
         android:layout_height="wrap_content"
         android:hint="Enter keyword"
         android:inputType="text"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/star1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="★"
+            android:textSize="22sp"
+            android:padding="12dp"/>
+
+        <TextView
+            android:id="@+id/star2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="★★"
+            android:textSize="22sp"
+            android:padding="12dp"/>
+
+        <TextView
+            android:id="@+id/star3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="★★★"
+            android:textSize="22sp"
+            android:padding="12dp"/>
+
+    </LinearLayout>
+
 </LinearLayout>

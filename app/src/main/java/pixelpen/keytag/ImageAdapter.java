@@ -12,6 +12,10 @@ import com.bumptech.glide.Glide;
 
 import java.util.List;
 
+import pixelpen.keytag.db.AppDatabase;
+import pixelpen.keytag.db.TaggingDao;
+
+
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
     public interface SelectionListener {
@@ -39,8 +43,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
     public void onBindViewHolder(@NonNull VH holder, int position) {
 
         ImageItem item = images.get(position);
-
-
 
         Glide.with(holder.imageView.getContext())
                 .load(item.uri)
@@ -84,6 +86,25 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
             toggleSelection(position);
             return true;
         });
+
+        ImageView starOverlay = holder.itemView.findViewById(R.id.starOverlay);
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(holder.imageView.getContext());
+            TaggingDao dao = db.taggingDao();
+
+            Integer level = dao.getQuality(item.uri.toString());
+
+            holder.itemView.post(() -> {
+                if (level != null && level > 0) {
+                    starOverlay.setVisibility(View.VISIBLE);
+                } else {
+                    starOverlay.setVisibility(View.GONE);
+                }
+            });
+
+        }).start();
     }
 
     @Override

@@ -22,6 +22,9 @@ import pixelpen.keytag.db.AppDatabase;
 import pixelpen.keytag.db.TaggingDao;
 import java.util.ArrayList;
 
+import android.widget.TextView;
+import android.content.Intent;
+
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -210,6 +213,17 @@ public class MainActivity extends AppCompatActivity {
                         );
 
                 searchInput.setAdapter(adapter);
+
+                TextView star1 = dialogView.findViewById(R.id.star1);
+                TextView star2 = dialogView.findViewById(R.id.star2);
+                TextView star3 = dialogView.findViewById(R.id.star3);
+
+
+                star1.setOnClickListener(v -> searchByStars(1));
+                star2.setOnClickListener(v -> searchByStars(2));
+                star3.setOnClickListener(v -> searchByStars(3));
+
+
             });
 
         }).start();
@@ -268,6 +282,31 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
+    private void searchByStars(int level) {
 
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            List<String> results = dao.getUrisByStarLevel(level);
+
+            runOnUiThread(() -> {
+
+                Intent intent = new Intent(this, AlbumContentsActivity.class);
+
+                intent.putStringArrayListExtra(
+                        "search_results",
+                        new ArrayList<>(results)
+                );
+
+                intent.putExtra("bucket_name", "Search Results");
+
+                startActivity(intent);
+
+            });
+
+        }).start();
+    }
 
 }

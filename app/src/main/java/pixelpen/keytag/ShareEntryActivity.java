@@ -42,7 +42,7 @@ public class ShareEntryActivity extends AppCompatActivity {
 
                     if (uris != null) {
                         for (Uri uri : uris) {
-                            uriStrings.add(uri.toString());
+                            uriStrings.add(resolveToMediaStoreUri(uri));
                         }
                     }
                 }

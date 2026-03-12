@@ -16,6 +16,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
+    <ImageView
+        android:id="@+id/starOverlay"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_margin="6dp"
+        android:visibility="gone"
+        android:src="@drawable/baseline_star_24"
+        android:tint="#FFFFFF"
+        android:background="@drawable/star_circle_bg"
+        android:padding="2dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
     <!-- Blue circle background -->
     <View
         android:id="@+id/selectionCircle"

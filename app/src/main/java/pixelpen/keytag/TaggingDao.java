@@ -77,6 +77,9 @@ public interface TaggingDao {
     // Get quality level
     @Query("SELECT qualityLevel FROM images WHERE uri = :uri LIMIT 1")
     Integer getQuality(String uri);
+    @Query("SELECT uri FROM images WHERE qualityLevel = :level")
+    List<String> getUrisByStarLevel(int level);
 
-
+    @Query("SELECT uri FROM images WHERE qualityLevel >= :level")
+    List<String> getUrisByMinimumStarLevel(int level);
 }

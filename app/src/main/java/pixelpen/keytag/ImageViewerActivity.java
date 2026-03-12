@@ -32,6 +32,11 @@ import android.graphics.Color;
 
 import android.widget.LinearLayout;
 
+import android.content.ContentUris;
+import android.net.Uri;
+
+
+
 public class ImageViewerActivity extends AppCompatActivity {
 
     private ViewPager2 viewPager;
@@ -95,19 +100,17 @@ public class ImageViewerActivity extends AppCompatActivity {
 
             startActivity(viewIntent);
         });
+
         LinearLayout starContainer = findViewById(R.id.starContainer);
 
         starContainer.setOnClickListener(v -> {
             toggleFavorite();
         });
 
-
-
         View overlay = findViewById(R.id.uiOverlayContainer);
 
         ViewCompat.setOnApplyWindowInsetsListener(overlay, (v, insets) -> insets);
 
-        // Immersive mode
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 
         WindowInsetsControllerCompat controller =
@@ -129,7 +132,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         exifPanel.post(() -> {
 
             int screenWidth = getResources().getDisplayMetrics().widthPixels;
-            int panelWidth = screenWidth / 3; // exactly 1/3 screen
+            int panelWidth = screenWidth / 3;
 
             FrameLayout.LayoutParams params =
                     (FrameLayout.LayoutParams) exifPanel.getLayoutParams();
@@ -139,7 +142,6 @@ public class ImageViewerActivity extends AppCompatActivity {
 
             exifPanel.setTranslationX(panelWidth);
         });
-
 
         exifText = findViewById(R.id.exifText);
 
@@ -171,9 +173,6 @@ public class ImageViewerActivity extends AppCompatActivity {
                 }
         );
 
-
-
-
         ViewCompat.setOnApplyWindowInsetsListener(exifPanel, (view, insets) -> {
 
             int topInset = insets.getInsets(
@@ -189,7 +188,6 @@ public class ImageViewerActivity extends AppCompatActivity {
             return insets;
         });
 
-
         imageList = getIntent().getStringArrayListExtra("image_list");
         int startPosition = getIntent().getIntExtra("start_position", 0);
 
@@ -201,12 +199,14 @@ public class ImageViewerActivity extends AppCompatActivity {
             viewPager.setAdapter(adapter);
             viewPager.setCurrentItem(startPosition, false);
 
-            String currentUri = imageList.get(startPosition);
-            loadKeywordsForImage(currentUri);
+            // ADD THESE TWO LINES
+            String uri = imageList.get(startPosition);
+            loadKeywordsForImage(uri);
+            loadQualityForImage(uri);
         }
+
         viewPager.registerOnPageChangeCallback(
                 new ViewPager2.OnPageChangeCallback() {
-
 
                     public void onPageSelected(int position) {
 
@@ -236,7 +236,6 @@ public class ImageViewerActivity extends AppCompatActivity {
             }
         });
     }
-
     public void toggleSystemUi() {
 
         WindowInsetsControllerCompat controller =
@@ -510,6 +509,8 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
     private void loadQualityForImage(String uri) {
 
+        android.util.Log.d("KEYTAG", "Viewer lookup URI = " + uri);
+
         new Thread(() -> {
 
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
@@ -527,7 +528,5 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         }).start();
     }
-
-
 
 }
