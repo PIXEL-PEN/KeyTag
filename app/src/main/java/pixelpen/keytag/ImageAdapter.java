@@ -15,6 +15,7 @@ import java.util.List;
 import pixelpen.keytag.db.AppDatabase;
 import pixelpen.keytag.db.TaggingDao;
 
+import pixelpen.keytag.util.MediaStoreUtil;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
@@ -94,7 +95,22 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
             AppDatabase db = AppDatabase.getInstance(holder.imageView.getContext());
             TaggingDao dao = db.taggingDao();
 
-            Integer level = dao.getQuality(item.uri.toString());
+            long mediaId = MediaStoreUtil.getMediaStoreId(
+                    holder.imageView.getContext(),
+                    item.uri
+            );
+
+            Integer tmpLevel = null;
+
+            if (mediaId != -1) {
+                tmpLevel = dao.getQualityByMediaStoreId(mediaId);
+            }
+
+            if (tmpLevel == null) {
+                tmpLevel = dao.getQuality(item.uri.toString());
+            }
+
+            final Integer level = tmpLevel;
 
             holder.itemView.post(() -> {
                 if (level != null && level > 0) {
@@ -106,7 +122,6 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
         }).start();
     }
-
     @Override
     public int getItemCount() {
         return images.size();

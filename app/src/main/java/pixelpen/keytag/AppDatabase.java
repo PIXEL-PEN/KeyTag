@@ -12,7 +12,7 @@ import androidx.room.RoomDatabase;
                 KeywordEntity.class,
                 ImageKeywordCrossRef.class
         },
-        version = 2,   // bumped from 1 → 2
+        version = 3,   // bumped from 2 → 3
         exportSchema = false
 )
 public abstract class AppDatabase extends RoomDatabase {

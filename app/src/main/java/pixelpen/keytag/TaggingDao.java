@@ -88,4 +88,17 @@ public interface TaggingDao {
     // Update by ID (safer for toggleFavorite)
     @Query("UPDATE images SET qualityLevel = :level WHERE id = :id")
     void updateQualityById(long id, int level);
+
+    @Query("UPDATE images SET mediaStoreId = :mediaStoreId WHERE uri = :uri")
+    void updateMediaStoreId(String uri, long mediaStoreId);
+
+    @Query("SELECT qualityLevel FROM images WHERE mediaStoreId = :mediaStoreId LIMIT 1")
+    Integer getQualityByMediaStoreId(long mediaStoreId);
+
+    @Query("SELECT * FROM images WHERE mediaStoreId = :mediaStoreId LIMIT 1")
+    ImageEntity getImageByMediaStoreId(long mediaStoreId);
+
+    @Query("UPDATE images SET qualityLevel = :level WHERE mediaStoreId = :mediaStoreId")
+    void updateQualityByMediaStoreId(long mediaStoreId, int level);
+
 }

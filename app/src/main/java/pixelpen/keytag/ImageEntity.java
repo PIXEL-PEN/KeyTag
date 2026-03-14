@@ -19,9 +19,12 @@ public class ImageEntity {
 
     public int qualityLevel;   // 0–3 rating (default 0)
 
+    public Long mediaStoreId;
+
     public ImageEntity(String uri, long dateTagged) {
         this.uri = uri;
         this.dateTagged = dateTagged;
-        this.qualityLevel = 0;  // default value
+        this.qualityLevel = 0;
+        this.mediaStoreId = null;
     }
 }

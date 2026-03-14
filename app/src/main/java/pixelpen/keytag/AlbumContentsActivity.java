@@ -27,6 +27,8 @@ import pixelpen.keytag.db.KeywordEntity;
 import pixelpen.keytag.db.ImageKeywordCrossRef;
 import android.widget.ImageView;
 
+import pixelpen.keytag.util.MediaStoreUtil;
+
 public class AlbumContentsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
@@ -50,9 +52,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
         ArrayList<String> searchUris =
                 getIntent().getStringArrayListExtra("search_results");
 
-        boolean shareMode =
+        shareMode =
                 getIntent().getBooleanExtra("share_mode", false);
-
         android.util.Log.d("SHARE_DEBUG", "shareMode = " + shareMode);
 
         getWindow().setDecorFitsSystemWindows(true);
@@ -269,18 +270,38 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
                 String uriString = item.uri.toString();
 
-                ImageEntity image = dao.getImageByUri(uriString);
+                long mediaId = MediaStoreUtil.getMediaStoreId(
+                        getApplicationContext(),
+                        Uri.parse(uriString)
+                );
+
+                ImageEntity image = null;
+
+                if (mediaId != -1) {
+                    image = dao.getImageByMediaStoreId(mediaId);
+                }
+
+                if (image == null) {
+                    image = dao.getImageByUri(uriString);
+                }
 
                 if (image == null) {
                     dao.insertImage(new ImageEntity(uriString, System.currentTimeMillis()));
                     image = dao.getImageByUri(uriString);
+
+                    if (mediaId != -1) {
+                        dao.updateMediaStoreId(uriString, mediaId);
+                    }
                 }
 
                 if (image == null) continue;
 
                 // Apply rating
-                dao.updateQuality(uriString, rating);
-
+                if (mediaId != -1) {
+                    dao.updateQualityByMediaStoreId(mediaId, rating);
+                } else {
+                    dao.updateQuality(uriString, rating);
+                }
                 // Apply keyword (if provided)
                 if (keywordEntity != null) {
                     dao.insertCrossRef(
