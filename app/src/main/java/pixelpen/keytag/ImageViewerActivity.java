@@ -35,6 +35,8 @@ import android.widget.LinearLayout;
 import android.content.ContentUris;
 import android.net.Uri;
 
+import android.util.Log;
+
 
 
 public class ImageViewerActivity extends AppCompatActivity {
@@ -458,7 +460,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         if (imageList == null || position < 0 || position >= imageList.size())
             return;
 
-        String uri = imageList.get(position);
+        String uri = Uri.parse(imageList.get(position)).toString();
 
         new Thread(() -> {
 
@@ -467,22 +469,33 @@ public class ImageViewerActivity extends AppCompatActivity {
 
             ImageEntity image = dao.getImageByUri(uri);
 
+            int newLevel;
+
             if (image == null) {
-                dao.insertImage(new ImageEntity(uri, System.currentTimeMillis()));
-                image = dao.getImageByUri(uri);
+
+                newLevel = 1;
+
+                ImageEntity newImage = new ImageEntity(uri, System.currentTimeMillis());
+                newImage.qualityLevel = newLevel;
+
+                dao.insertImage(newImage);
+
+            } else {
+
+                int current = image.qualityLevel;
+                newLevel = (current + 1) % 4;
+
+                dao.updateQuality(uri, newLevel);
             }
 
-            int current = image.qualityLevel;
-            int newLevel = (current + 1) % 4;
+            Log.d("KEYTAG", "STAR WRITE URI = " + uri);
 
-            dao.updateQuality(uri, newLevel);
+            int finalLevel = newLevel;
 
-            runOnUiThread(() -> updateStarIconForLevel(newLevel));
+            runOnUiThread(() -> updateStarIconForLevel(finalLevel));
 
         }).start();
     }
-
-
     private void updateStarIconForLevel(int level) {
 
         ImageView star1 = findViewById(R.id.star1);

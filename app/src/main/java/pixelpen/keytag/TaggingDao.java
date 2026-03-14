@@ -10,11 +10,11 @@ import java.util.List;
 @Dao
 public interface TaggingDao {
 
-    // Insert image (ignore if already exists)
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    long insertImage(ImageEntity image);
+    // Insert image
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertImage(ImageEntity image);
 
-    // Insert keyword (ignore if already exists)
+    // Insert keyword
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     long insertKeyword(KeywordEntity keyword);
 
@@ -32,12 +32,11 @@ public interface TaggingDao {
 
     // Get keywords for an image
     @Query("SELECT k.* FROM keywords k " +
-            "INNER JOIN image_keywords ik " +
-            "ON k.id = ik.keywordId " +
+            "INNER JOIN image_keywords ik ON k.id = ik.keywordId " +
             "WHERE ik.imageId = :imageId")
     List<KeywordEntity> getKeywordsForImage(long imageId);
 
-    // Get all keyword names (sorted by usage)
+    // Get all keyword names
     @Query("SELECT name FROM keywords ORDER BY usageCount DESC")
     List<String> getAllKeywordNames();
 
@@ -53,10 +52,11 @@ public interface TaggingDao {
     @Query("SELECT usageCount FROM keywords WHERE id = :keywordId")
     int getUsageCount(long keywordId);
 
-    // Remove keyword from specific image
+    // Remove keyword from image
     @Query("DELETE FROM image_keywords WHERE imageId = :imageId AND keywordId = :keywordId")
     void removeCrossRef(long imageId, long keywordId);
-    // Delete keyword entirely
+
+    // Delete keyword
     @Query("DELETE FROM keywords WHERE id = :keywordId")
     void deleteKeywordById(long keywordId);
 
@@ -70,16 +70,22 @@ public interface TaggingDao {
     @Query("SELECT COUNT(*) FROM image_keywords WHERE keywordId = :keywordId")
     int getKeywordUsageFromCrossRef(long keywordId);
 
-    // Update quality level
+    // Update star rating
     @Query("UPDATE images SET qualityLevel = :level WHERE uri = :uri")
     void updateQuality(String uri, int level);
 
-    // Get quality level
+    // Get star rating
     @Query("SELECT qualityLevel FROM images WHERE uri = :uri LIMIT 1")
     Integer getQuality(String uri);
+
+    // Star search
     @Query("SELECT uri FROM images WHERE qualityLevel = :level")
     List<String> getUrisByStarLevel(int level);
 
     @Query("SELECT uri FROM images WHERE qualityLevel >= :level")
     List<String> getUrisByMinimumStarLevel(int level);
+
+    // Update by ID (safer for toggleFavorite)
+    @Query("UPDATE images SET qualityLevel = :level WHERE id = :id")
+    void updateQualityById(long id, int level);
 }
