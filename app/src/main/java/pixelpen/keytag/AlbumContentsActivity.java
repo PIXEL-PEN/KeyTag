@@ -286,19 +286,31 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 }
 
                 if (image == null) {
+
                     dao.insertImage(new ImageEntity(uriString, System.currentTimeMillis()));
-                    image = dao.getImageByUri(uriString);
 
                     if (mediaId != -1) {
                         dao.updateMediaStoreId(uriString, mediaId);
+                        image = dao.getImageByMediaStoreId(mediaId);
+                    } else {
+                        image = dao.getImageByUri(uriString);
                     }
                 }
-
                 if (image == null) continue;
 
                 // Apply rating
                 if (mediaId != -1) {
-                    dao.updateQualityByMediaStoreId(mediaId, rating);
+                    if (mediaId != -1) {
+                        dao.updateQualityByMediaStoreId(mediaId, rating);
+
+                        android.util.Log.d("STAR_DEBUG",
+                                "WRITE uri=" + uriString +
+                                        " mediaId=" + mediaId +
+                                        " rating=" + rating);
+
+                    } else {
+                        dao.updateQuality(uriString, rating);
+                    }
                 } else {
                     dao.updateQuality(uriString, rating);
                 }

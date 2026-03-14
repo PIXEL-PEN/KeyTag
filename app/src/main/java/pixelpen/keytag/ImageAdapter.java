@@ -104,15 +104,24 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.VH> {
 
             if (mediaId != -1) {
                 tmpLevel = dao.getQualityByMediaStoreId(mediaId);
+
+                if (tmpLevel == null) {
+                    dao.updateMediaStoreId(item.uri.toString(), mediaId);
+                }
             }
 
             if (tmpLevel == null) {
                 tmpLevel = dao.getQuality(item.uri.toString());
             }
-
             final Integer level = tmpLevel;
 
             holder.itemView.post(() -> {
+
+                android.util.Log.d("STAR_DEBUG",
+                        "READ uri=" + item.uri +
+                                " mediaId=" + mediaId +
+                                " level=" + level);
+
                 if (level != null && level > 0) {
                     starOverlay.setVisibility(View.VISIBLE);
                 } else {

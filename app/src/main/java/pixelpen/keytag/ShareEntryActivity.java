@@ -62,66 +62,46 @@ public class ShareEntryActivity extends AppCompatActivity {
 
     private String resolveToMediaStoreUri(Uri uri) {
 
-        // First try direct _ID query (works for real MediaStore URIs)
-        String[] projection = {MediaStore.Images.Media._ID};
+        try {
 
-        try (Cursor cursor = getContentResolver().query(
-                uri,
-                projection,
-                null,
-                null,
-                null)) {
-
-            if (cursor != null && cursor.moveToFirst()
-                    && cursor.getColumnCount() > 0) {
-
-                long id = cursor.getLong(0);
-
-                Uri mediaUri = Uri.withAppendedPath(
-                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                        String.valueOf(id)
-                );
-
-                return mediaUri.toString();
+            if ("media".equals(uri.getAuthority())) {
+                return uri.toString();
             }
-        } catch (Exception ignored) {
-        }
 
-        // If that fails, resolve via file path
-        try (Cursor cursor = getContentResolver().query(
-                uri,
-                new String[]{MediaStore.Images.Media.DATA},
-                null,
-                null,
-                null)) {
+            String name = uri.getLastPathSegment();
 
-            if (cursor != null && cursor.moveToFirst()) {
+            if (name != null) {
 
-                String path = cursor.getString(0);
-
-                try (Cursor mediaCursor = getContentResolver().query(
+                Cursor cursor = getContentResolver().query(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         new String[]{MediaStore.Images.Media._ID},
-                        MediaStore.Images.Media.DATA + "=?",
-                        new String[]{path},
-                        null)) {
+                        MediaStore.Images.Media.DISPLAY_NAME + "=?",
+                        new String[]{name},
+                        null
+                );
 
-                    if (mediaCursor != null && mediaCursor.moveToFirst()) {
+                if (cursor != null) {
+                    try {
+                        if (cursor.moveToFirst()) {
 
-                        long id = mediaCursor.getLong(0);
+                            long id = cursor.getLong(0);
 
-                        Uri mediaUri = Uri.withAppendedPath(
-                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                                String.valueOf(id)
-                        );
+                            Uri mediaUri = Uri.withAppendedPath(
+                                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                                    String.valueOf(id)
+                            );
 
-                        return mediaUri.toString();
+                            return mediaUri.toString();
+                        }
+                    } finally {
+                        cursor.close();
                     }
                 }
             }
+
         } catch (Exception ignored) {
         }
 
-        return uri.toString(); // fallback
+        return uri.toString();
     }
 }
