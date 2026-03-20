@@ -122,7 +122,8 @@
                     android:layout_height="wrap_content"
                     android:padding="16dp"
                     android:textColor="#F2F2F2"
-                    android:textSize="13sp"/>
+                    android:textSize="13sp"
+                    android:textAlignment="viewStart"/>
             </ScrollView>
 
         </com.google.android.material.card.MaterialCardView>

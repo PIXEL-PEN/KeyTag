@@ -406,7 +406,6 @@ public class ImageViewerActivity extends AppCompatActivity {
     private void loadExif(String uriString) {
 
         try {
-
             android.net.Uri uri = android.net.Uri.parse(uriString);
 
             androidx.exifinterface.media.ExifInterface exif =
@@ -414,44 +413,132 @@ public class ImageViewerActivity extends AppCompatActivity {
                             getContentResolver().openInputStream(uri)
                     );
 
-            String make = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE);
-            String model = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL);
-            String iso = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_ISO_SPEED_RATINGS);
+            String make     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE);
+            String model    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL);
+            String iso      = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_ISO_SPEED_RATINGS);
             String exposure = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME);
             String aperture = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER);
-            String focal = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH);
-            String date = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
+            String focal    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH);
+            String date     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
 
-            StringBuilder builder = new StringBuilder();
+            // Image dimensions from MediaStore
+            int imgWidth = 0, imgHeight = 0;
+            try {
+                android.database.Cursor cursor = getContentResolver().query(
+                        uri,
+                        new String[]{
+                                android.provider.MediaStore.Images.Media.WIDTH,
+                                android.provider.MediaStore.Images.Media.HEIGHT
+                        },
+                        null, null, null
+                );
+                if (cursor != null) {
+                    if (cursor.moveToFirst()) {
+                        imgWidth  = cursor.getInt(0);
+                        imgHeight = cursor.getInt(1);
+                    }
+                    cursor.close();
+                }
+            } catch (Exception ignored) {}
 
-            if (make != null || model != null)
-                builder.append(make != null ? make : "")
+            // Keywords from DB
+            List<String> keywordNames = new ArrayList<>();
+            try {
+                AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+                TaggingDao dao = db.taggingDao();
+                ImageEntity image = dao.getImageByUri(uri.toString());
+                if (image != null) {
+                    List<pixelpen.keytag.db.KeywordEntity> kws =
+                            dao.getKeywordsForImage(image.id);
+                    for (pixelpen.keytag.db.KeywordEntity kw : kws) {
+                        keywordNames.add(kw.name);
+                    }
+                }
+            } catch (Exception ignored) {}
+
+            StringBuilder sb = new StringBuilder();
+
+            // Date — prominent at top
+            if (date != null)
+                sb.append(formatExifDate(date)).append("\n");
+
+            // Device
+            if (make != null || model != null) {
+                sb.append("\n");
+                sb.append(make != null ? make : "")
                         .append(" ")
                         .append(model != null ? model : "")
                         .append("\n");
+            }
 
-            if (iso != null)
-                builder.append("ISO ").append(iso).append("\n");
+            // Camera specs
+            boolean hasSpecs = iso != null || exposure != null
+                    || aperture != null || focal != null;
+            if (hasSpecs) {
+                sb.append("\n");
+                if (iso != null)
+                    sb.append("ISO ").append(iso).append("\n");
+                if (exposure != null)
+                    sb.append(formatExposure(exposure)).append("\n");
+                if (aperture != null)
+                    sb.append("f/").append(aperture).append("\n");
+                if (focal != null)
+                    sb.append(formatFocal(focal)).append("\n");
+            }
 
-            if (exposure != null)
-                builder.append("Shutter ").append(exposure).append(" sec\n");
+            // Image size
+            if (imgWidth > 0 && imgHeight > 0) {
+                long mp = Math.round((imgWidth * (long) imgHeight) / 1_000_000.0);
+                sb.append("\n")
+                        .append(imgWidth).append(" × ").append(imgHeight)
+                        .append("  •  ").append(mp).append(" MP\n");
+            }
 
-            if (aperture != null)
-                builder.append("f/").append(aperture).append("\n");
+            // Keywords
+            if (!keywordNames.isEmpty()) {
+                sb.append("\n")
+                        .append(android.text.TextUtils.join("  ·  ", keywordNames))
+                        .append("\n");
+            }
 
-            if (focal != null)
-                builder.append("Focal ").append(focal).append(" mm\n");
-
-            if (date != null)
-                builder.append("Date ").append(date);
-
-            exifText.setText(builder.toString());
+            exifText.setText(sb.toString());
 
         } catch (Exception e) {
             exifText.setText("No EXIF data available");
         }
     }
+    // Format exposure as fraction e.g. 0.004 → 1/250 sec
+    private String formatExposure(String exposure) {
+        try {
+            double val = Double.parseDouble(exposure);
+            if (val > 0 && val < 1) {
+                long denom = Math.round(1.0 / val);
+                return "1/" + denom + " sec";
+            } else {
+                return exposure + " sec";
+            }
+        } catch (Exception e) {
+            return exposure + " sec";
+        }
+    }
 
+    // Format focal length — Exif stores as rational e.g. "24/1"
+    private String formatFocal(String focal) {
+        try {
+            if (focal.contains("/")) {
+                String[] parts = focal.split("/");
+                double num   = Double.parseDouble(parts[0]);
+                double denom = Double.parseDouble(parts[1]);
+                if (denom != 0) {
+                    long mm = Math.round(num / denom);
+                    return mm + " mm";
+                }
+            }
+            return focal + " mm";
+        } catch (Exception e) {
+            return focal + " mm";
+        }
+    }
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
@@ -561,5 +648,34 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         }).start();
     }
+
+    private String formatExifDate(String exifDate) {
+        try {
+            // Exif format: "2026:03:20 10:15:00"
+            String[] parts = exifDate.split(" ");
+            String[] dateParts = parts[0].split(":");
+
+            int year  = Integer.parseInt(dateParts[0]);
+            int month = Integer.parseInt(dateParts[1]);
+            int day   = Integer.parseInt(dateParts[2]);
+
+            String[] monthNames = {
+                    "Jan.","Feb.","Mar.","Apr.","May","Jun.",
+                    "Jul.","Aug.","Sep.","Oct.","Nov.","Dec."
+            };
+
+            String monthName = (month >= 1 && month <= 12)
+                    ? monthNames[month - 1] : String.valueOf(month);
+
+            String time = parts.length > 1 ? parts[1] : "";
+
+            return year + "  " + monthName + " " + day + "     " + time;
+
+        } catch (Exception e) {
+            return exifDate;
+        }
+    }
+
+
 
 }
