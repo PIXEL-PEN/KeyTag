@@ -301,11 +301,29 @@ public class ImageViewerActivity extends AppCompatActivity {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
 
-            ImageEntity image = dao.getImageByUri(uriString);
-            if (image == null) return;
+            long mediaId = pixelpen.keytag.util.MediaStoreUtil.getMediaStoreId(
+                    getApplicationContext(),
+                    android.net.Uri.parse(uriString)
+            );
+
+            ImageEntity image = null;
+
+            if (mediaId != -1) {
+                image = dao.getImageByMediaStoreId(mediaId);
+            }
+
+            if (image == null) {
+                image = dao.getImageByUri(uriString);
+            }
+
+            if (image == null) {
+                runOnUiThread(() -> keywordChipGroup.removeAllViews());
+                return;
+            }
+            final ImageEntity finalImage = image;
 
             List<KeywordEntity> keywords =
-                    dao.getKeywordsForImage(image.id);
+                    dao.getKeywordsForImage(finalImage.id);
 
             runOnUiThread(() -> {
 
@@ -320,7 +338,7 @@ public class ImageViewerActivity extends AppCompatActivity {
                     chip.setCloseIconVisible(true);
 
                     chip.setOnCloseIconClickListener(v ->
-                            confirmRemoveKeyword(image.id, keyword.id)
+                            confirmRemoveKeyword(finalImage.id, keyword.id)
                     );
 
                     keywordChipGroup.addView(chip);
@@ -404,109 +422,107 @@ public class ImageViewerActivity extends AppCompatActivity {
     }
 
     private void loadExif(String uriString) {
-
-        try {
-            android.net.Uri uri = android.net.Uri.parse(uriString);
-
-            androidx.exifinterface.media.ExifInterface exif =
-                    new androidx.exifinterface.media.ExifInterface(
-                            getContentResolver().openInputStream(uri)
-                    );
-
-            String make     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE);
-            String model    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL);
-            String iso      = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_ISO_SPEED_RATINGS);
-            String exposure = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME);
-            String aperture = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER);
-            String focal    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH);
-            String date     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
-
-            // Image dimensions from MediaStore
-            int imgWidth = 0, imgHeight = 0;
+        new Thread(() -> {
             try {
-                android.database.Cursor cursor = getContentResolver().query(
-                        uri,
-                        new String[]{
-                                android.provider.MediaStore.Images.Media.WIDTH,
-                                android.provider.MediaStore.Images.Media.HEIGHT
-                        },
-                        null, null, null
-                );
-                if (cursor != null) {
-                    if (cursor.moveToFirst()) {
-                        imgWidth  = cursor.getInt(0);
-                        imgHeight = cursor.getInt(1);
+                android.net.Uri uri = android.net.Uri.parse(uriString);
+                androidx.exifinterface.media.ExifInterface exif =
+                        new androidx.exifinterface.media.ExifInterface(
+                                getContentResolver().openInputStream(uri));
+
+                String make     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE);
+                String model    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL);
+                String iso      = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_ISO_SPEED_RATINGS);
+                String exposure = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME);
+                String aperture = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER);
+                String focal    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH);
+                String date     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
+
+                int imgWidth = 0, imgHeight = 0;
+                try {
+                    android.database.Cursor cursor = getContentResolver().query(
+                            uri,
+                            new String[]{
+                                    android.provider.MediaStore.Images.Media.WIDTH,
+                                    android.provider.MediaStore.Images.Media.HEIGHT
+                            }, null, null, null);
+                    if (cursor != null) {
+                        if (cursor.moveToFirst()) {
+                            imgWidth  = cursor.getInt(0);
+                            imgHeight = cursor.getInt(1);
+                        }
+                        cursor.close();
                     }
-                    cursor.close();
-                }
-            } catch (Exception ignored) {}
+                } catch (Exception ignored) {}
 
-            // Keywords from DB
-            List<String> keywordNames = new ArrayList<>();
-            try {
-                AppDatabase db = AppDatabase.getInstance(getApplicationContext());
-                TaggingDao dao = db.taggingDao();
-                ImageEntity image = dao.getImageByUri(uri.toString());
-                if (image != null) {
-                    List<pixelpen.keytag.db.KeywordEntity> kws =
-                            dao.getKeywordsForImage(image.id);
-                    for (pixelpen.keytag.db.KeywordEntity kw : kws) {
-                        keywordNames.add(kw.name);
+                List<String> keywordNames = new ArrayList<>();
+                try {
+                    AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+                    TaggingDao dao = db.taggingDao();
+                    long mediaId = pixelpen.keytag.util.MediaStoreUtil.getMediaStoreId(
+                            getApplicationContext(), uri);
+                    ImageEntity image = null;
+                    if (mediaId != -1) {
+                        image = dao.getImageByMediaStoreId(mediaId);
                     }
+                    if (image == null) {
+                        image = dao.getImageByUri(uri.toString());
+                    }
+                    if (image != null) {
+                        List<pixelpen.keytag.db.KeywordEntity> kws =
+                                dao.getKeywordsForImage(image.id);
+                        for (pixelpen.keytag.db.KeywordEntity kw : kws) {
+                            keywordNames.add(kw.name);
+                        }
+                    }
+                } catch (Exception ignored) {}
+
+                StringBuilder sb = new StringBuilder();
+
+                if (date != null)
+                    sb.append(formatExifDate(date)).append("\n");
+
+                if (make != null || model != null) {
+                    sb.append("\n");
+                    sb.append(make != null ? make : "")
+                            .append(" ")
+                            .append(model != null ? model : "")
+                            .append("\n");
                 }
-            } catch (Exception ignored) {}
 
-            StringBuilder sb = new StringBuilder();
+                boolean hasSpecs = iso != null || exposure != null
+                        || aperture != null || focal != null;
+                if (hasSpecs) {
+                    sb.append("\n");
+                    if (iso != null)      sb.append("ISO ").append(iso).append("\n");
+                    if (exposure != null) sb.append(formatExposure(exposure)).append("\n");
+                    if (aperture != null) sb.append("f/").append(aperture).append("\n");
+                    if (focal != null)    sb.append(formatFocal(focal)).append("\n");
+                }
 
-            // Date — prominent at top
-            if (date != null)
-                sb.append(formatExifDate(date)).append("\n");
+                int finalWidth = imgWidth;
+                int finalHeight = imgHeight;
+                if (finalWidth > 0 && finalHeight > 0) {
+                    long mp = Math.round((finalWidth * (long) finalHeight) / 1_000_000.0);
+                    sb.append("\n")
+                            .append(finalWidth).append(" × ").append(finalHeight)
+                            .append("  •  ").append(mp).append(" MP\n");
+                }
 
-            // Device
-            if (make != null || model != null) {
-                sb.append("\n");
-                sb.append(make != null ? make : "")
-                        .append(" ")
-                        .append(model != null ? model : "")
-                        .append("\n");
+                if (!keywordNames.isEmpty()) {
+                    sb.append("\n")
+                            .append(android.text.TextUtils.join("  ·  ", keywordNames))
+                            .append("\n");
+                }
+
+                String result = sb.toString();
+                runOnUiThread(() -> exifText.setText(result));
+
+            } catch (Exception e) {
+                runOnUiThread(() -> exifText.setText("No EXIF data available"));
             }
-
-            // Camera specs
-            boolean hasSpecs = iso != null || exposure != null
-                    || aperture != null || focal != null;
-            if (hasSpecs) {
-                sb.append("\n");
-                if (iso != null)
-                    sb.append("ISO ").append(iso).append("\n");
-                if (exposure != null)
-                    sb.append(formatExposure(exposure)).append("\n");
-                if (aperture != null)
-                    sb.append("f/").append(aperture).append("\n");
-                if (focal != null)
-                    sb.append(formatFocal(focal)).append("\n");
-            }
-
-            // Image size
-            if (imgWidth > 0 && imgHeight > 0) {
-                long mp = Math.round((imgWidth * (long) imgHeight) / 1_000_000.0);
-                sb.append("\n")
-                        .append(imgWidth).append(" × ").append(imgHeight)
-                        .append("  •  ").append(mp).append(" MP\n");
-            }
-
-            // Keywords
-            if (!keywordNames.isEmpty()) {
-                sb.append("\n")
-                        .append(android.text.TextUtils.join("  ·  ", keywordNames))
-                        .append("\n");
-            }
-
-            exifText.setText(sb.toString());
-
-        } catch (Exception e) {
-            exifText.setText("No EXIF data available");
-        }
+        }).start();
     }
+
     // Format exposure as fraction e.g. 0.004 → 1/250 sec
     private String formatExposure(String exposure) {
         try {

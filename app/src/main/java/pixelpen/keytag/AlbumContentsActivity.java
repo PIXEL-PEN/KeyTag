@@ -235,15 +235,16 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 .setPositiveButton("Apply", (dialog, which) -> {
 
                     String keyword = tagInput.getText().toString().trim();
+                    boolean writeExif = ((android.widget.CheckBox) dialogView.findViewById(R.id.exifToggle)).isChecked();
 
-                    android.util.Log.d("STAR_DEBUG", "Apply pressed — keyword=" + keyword + " rating=" + rating[0]);
+                    android.util.Log.d("STAR_DEBUG", "Apply pressed — keyword=" + keyword + " rating=" + rating[0] + " writeExif=" + writeExif);
 
-                    applyMetadataToSelected(keyword, rating[0]);
+                    applyMetadataToSelected(keyword, rating[0], writeExif);
 
                 })
                 .show();
     }
-    private void applyMetadataToSelected(String keyword, int rating) {
+    private void applyMetadataToSelected(String keyword, int rating, boolean writeExif) {
 
         final String normalized = keyword == null
                 ? ""
@@ -371,4 +372,84 @@ public class AlbumContentsActivity extends AppCompatActivity {
         star3.setImageResource(level >= 3 ? filled : empty);
         star3.setColorFilter(level >= 3 ? gold : white);
     }
+
+
+    private void writeXmpSidecar(android.content.Context context, Uri imageUri, String keyword) {
+        try {
+            // Resolve file path from MediaStore
+            String filePath = null;
+            android.database.Cursor cursor = context.getContentResolver().query(
+                    imageUri,
+                    new String[]{ android.provider.MediaStore.Images.Media.DATA },
+                    null, null, null
+            );
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    filePath = cursor.getString(0);
+                }
+                cursor.close();
+            }
+
+            if (filePath == null) return;
+
+            // Derive sidecar path: same name, .xmp extension
+            String xmpPath = filePath.replaceAll("\\.[^.]+$", ".xmp");
+            java.io.File xmpFile = new java.io.File(xmpPath);
+
+            // Read existing keywords if sidecar already exists
+            List<String> existingKeywords = new ArrayList<>();
+            if (xmpFile.exists()) {
+                String existing = new String(
+                        java.nio.file.Files.readAllBytes(xmpFile.toPath())
+                );
+                // Extract existing rdf:li entries
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("<rdf:li>(.+?)</rdf:li>")
+                        .matcher(existing);
+                while (m.find()) {
+                    existingKeywords.add(m.group(1).trim());
+                }
+            }
+
+            // Add new keyword if not already present
+            if (!existingKeywords.contains(keyword)) {
+                existingKeywords.add(keyword);
+            }
+
+            // Build XMP content
+            StringBuilder items = new StringBuilder();
+            for (String kw : existingKeywords) {
+                items.append("        <rdf:li>").append(kw).append("</rdf:li>\n");
+            }
+
+            String xmp =
+                    "<?xpacket begin='' id='W5M0MpCehiHzreSzNTczkc9d'?>\n" +
+                            "<x:xmpmeta xmlns:x='adobe:ns:meta/'>\n" +
+                            "  <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>\n" +
+                            "    <rdf:Description rdf:about=''\n" +
+                            "        xmlns:dc='http://purl.org/dc/elements/1.1/'>\n" +
+                            "      <dc:subject>\n" +
+                            "        <rdf:Bag>\n" +
+                            items +
+                            "        </rdf:Bag>\n" +
+                            "      </dc:subject>\n" +
+                            "    </rdf:Description>\n" +
+                            "  </rdf:RDF>\n" +
+                            "</x:xmpmeta>\n" +
+                            "<?xpacket end='w'?>";
+
+            // Write sidecar
+            java.io.FileWriter writer = new java.io.FileWriter(xmpFile, false);
+            writer.write(xmp);
+            writer.close();
+
+            android.util.Log.d("XMP_DEBUG", "XMP written: " + xmpPath + " keywords=" + existingKeywords);
+
+        } catch (Exception e) {
+            android.util.Log.d("XMP_DEBUG", "XMP write failed: " + e.getMessage());
+        }
+    }
+
+
+
 }
