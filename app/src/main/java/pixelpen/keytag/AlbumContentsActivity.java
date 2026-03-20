@@ -236,6 +236,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
                     String keyword = tagInput.getText().toString().trim();
 
+                    android.util.Log.d("STAR_DEBUG", "Apply pressed — keyword=" + keyword + " rating=" + rating[0]);
+
                     applyMetadataToSelected(keyword, rating[0]);
 
                 })

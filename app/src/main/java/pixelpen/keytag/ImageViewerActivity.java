@@ -238,6 +238,7 @@ public class ImageViewerActivity extends AppCompatActivity {
             }
         });
     }
+
     public void toggleSystemUi() {
 
         WindowInsetsControllerCompat controller =
@@ -328,6 +329,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         }).start();
     }
+
     private void confirmRemoveKeyword(long imageId, long keywordId) {
 
         new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
@@ -400,6 +402,7 @@ public class ImageViewerActivity extends AppCompatActivity {
             isExifVisible = true;
         }
     }
+
     private void loadExif(String uriString) {
 
         try {
@@ -496,6 +499,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         }).start();
     }
+
     private void updateStarIconForLevel(int level) {
 
         ImageView star1 = findViewById(R.id.star1);
@@ -503,7 +507,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         ImageView star3 = findViewById(R.id.star3);
 
         int filled = R.drawable.baseline_star_24;
-        int empty  = R.drawable.baseline_star_border_24;
+        int empty = R.drawable.baseline_star_border_24;
 
         int gold = Color.parseColor("#FFC107");
         int white = Color.WHITE;
@@ -520,6 +524,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         star3.setImageResource(level >= 3 ? filled : empty);
         star3.setColorFilter(level >= 3 ? gold : white);
     }
+
     private void loadQualityForImage(String uri) {
 
         android.util.Log.d("KEYTAG", "Viewer lookup URI = " + uri);
@@ -529,7 +534,22 @@ public class ImageViewerActivity extends AppCompatActivity {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
 
-            Integer level = dao.getQuality(uri);
+            long mediaId = pixelpen.keytag.util.MediaStoreUtil.getMediaStoreId(
+                    getApplicationContext(),
+                    android.net.Uri.parse(uri)
+            );
+
+            android.util.Log.d("STAR_DEBUG", "Viewer READ uri=" + uri + " mediaId=" + mediaId);
+
+            Integer level = null;
+
+            if (mediaId != -1) {
+                level = dao.getQualityByMediaStoreId(mediaId);
+            }
+
+            if (level == null) {
+                level = dao.getQuality(uri);
+            }
 
             if (level == null) {
                 level = 0;
