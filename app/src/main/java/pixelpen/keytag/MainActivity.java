@@ -87,10 +87,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (id == R.id.action_include) {
-            android.content.Intent intent = new android.content.Intent(
-                    android.content.Intent.ACTION_OPEN_DOCUMENT_TREE
-            );
-            startActivityForResult(intent, REQUEST_FOLDER_PICK);
+            showManageFoldersDialog();
             return true;
         }
 
@@ -505,5 +502,67 @@ public class MainActivity extends AppCompatActivity {
 
             loadAlbums();
         }
+
+
     }
+
+    private void showManageFoldersDialog() {
+        android.content.SharedPreferences prefs =
+                getSharedPreferences("keytag_prefs", MODE_PRIVATE);
+        java.util.Set<String> included = new java.util.HashSet<>(
+                prefs.getStringSet("included_folders", new java.util.HashSet<>()));
+
+        List<String> folders = new ArrayList<>(included);
+
+        if (folders.isEmpty()) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Manage Folders")
+                    .setMessage("No folders added yet.")
+                    .setPositiveButton("Add Folder", (dialog, which) -> {
+                        startActivityForResult(
+                                new android.content.Intent(
+                                        android.content.Intent.ACTION_OPEN_DOCUMENT_TREE),
+                                REQUEST_FOLDER_PICK
+                        );
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+            return;
+        }
+
+        // Show just folder names, store full paths
+        String[] displayNames = new String[folders.size()];
+        for (int i = 0; i < folders.size(); i++) {
+            displayNames[i] = new java.io.File(folders.get(i)).getName();
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Manage Folders")
+                .setItems(displayNames, (dialog, which) -> {
+                    String folderPath = folders.get(which);
+                    String folderName = displayNames[which];
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle("Remove folder?")
+                            .setMessage("\"" + folderName + "\" will be removed from KeyTag. Files are not deleted.")
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton("Remove", (d, w) -> {
+                                included.remove(folderPath);
+                                prefs.edit()
+                                        .putStringSet("included_folders", included)
+                                        .apply();
+                                loadAlbums();
+                            })
+                            .show();
+                })
+                .setNeutralButton("Add Folder", (dialog, which) -> {
+                    startActivityForResult(
+                            new android.content.Intent(
+                                    android.content.Intent.ACTION_OPEN_DOCUMENT_TREE),
+                            REQUEST_FOLDER_PICK
+                    );
+                })
+                .setNegativeButton("Close", null)
+                .show();
+    }
+
 }
