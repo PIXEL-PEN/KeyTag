@@ -92,10 +92,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (id == R.id.action_sort) {
-            android.widget.Toast.makeText(this, "Sort clicked", android.widget.Toast.LENGTH_SHORT).show();
+            showSortDialog();
             return true;
         }
-
         if (id == R.id.action_search) {
             showGlobalSearchDialog();
             return true;
@@ -210,10 +209,17 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Sort the rest alphabetically
-        java.util.Collections.sort(otherAlbums,
-                (a, b) -> a.bucketName.compareToIgnoreCase(b.bucketName));
+        int sortMode = getSharedPreferences("keytag_prefs", MODE_PRIVATE)
+                .getInt("sort_mode", 0);
 
+        if (sortMode == 0) {
+            // Alphabetical
+            java.util.Collections.sort(otherAlbums,
+                    (a, b) -> a.bucketName.compareToIgnoreCase(b.bucketName));
+        } else {
+            // Date Added — already in DATE_ADDED DESC order from MediaStore query
+            // no re-sort needed, preserve insertion order
+        }
         // Rebuild with ShortList pinned at top
         List<AlbumItem> sortedList = new ArrayList<>();
         if (shortListItem != null) {
@@ -353,5 +359,24 @@ public class MainActivity extends AppCompatActivity {
 
         }).start();
     }
+
+    private void showSortDialog() {
+        String[] options = {"Alphabetical", "Date Added"};
+        int current = getSharedPreferences("keytag_prefs", MODE_PRIVATE)
+                .getInt("sort_mode", 0);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Sort Albums")
+                .setSingleChoiceItems(options, current, (dialog, which) -> {
+                    getSharedPreferences("keytag_prefs", MODE_PRIVATE)
+                            .edit()
+                            .putInt("sort_mode", which)
+                            .apply();
+                    dialog.dismiss();
+                    loadAlbums();
+                })
+                .show();
+    }
+
 
 }
