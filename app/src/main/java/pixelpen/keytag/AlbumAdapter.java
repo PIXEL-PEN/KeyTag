@@ -37,16 +37,36 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
         holder.textName.setText(album.bucketName);
         holder.textCount.setText(album.itemCount + " items");
 
-        holder.itemView.setOnClickListener(v -> {
+        // ShortList gets a distinct highlight
+        boolean isShortList = album.bucketName != null &&
+                album.bucketName.trim().equalsIgnoreCase("ShortList");
 
+
+
+
+
+
+        if (isShortList) {
+            holder.textName.setTextColor(android.graphics.Color.parseColor("#FFC107"));
+            holder.imageFolder.setColorFilter(
+                    android.graphics.Color.parseColor("#FFC107"),
+                    android.graphics.PorterDuff.Mode.SRC_IN
+            );
+            holder.itemView.setBackgroundColor(
+                    android.graphics.Color.parseColor("#1AFFC107")
+            );
+        } else {
+            holder.textName.setTextColor(android.graphics.Color.WHITE);
+            holder.imageFolder.setColorFilter(null);
+            holder.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        }
+
+        holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(v.getContext(), AlbumContentsActivity.class);
             intent.putExtra("bucket_id", album.bucketId);
             intent.putExtra("bucket_name", album.bucketName);
             v.getContext().startActivity(intent);
         });
-
-
-
 
         // Make tile square
         holder.itemView.post(() -> {

@@ -120,6 +120,23 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadAlbums() {
 
+        // Create ShortList folder if it doesn't exist
+        java.io.File picturesRoot =
+                android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_PICTURES
+                );
+
+        java.io.File shortListFolder = new java.io.File(picturesRoot, "ShortList");
+
+        if (!shortListFolder.exists()) {
+            shortListFolder.mkdirs();
+            // Make it visible to MediaStore immediately
+            sendBroadcast(new android.content.Intent(
+                    android.content.Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                    android.net.Uri.fromFile(shortListFolder)
+            ));
+        }
+
         List<AlbumItem> albumList = new ArrayList<>();
 
         String[] projection = {
@@ -140,18 +157,21 @@ public class MainActivity extends AppCompatActivity {
 
             Map<Long, AlbumItem> albumMap = new LinkedHashMap<>();
 
-            int bucketIdColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
+            int bucketIdColumn   = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_ID);
             int bucketNameColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.BUCKET_DISPLAY_NAME);
-            int pathColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.RELATIVE_PATH);
+            int pathColumn       = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.RELATIVE_PATH);
 
             while (cursor.moveToNext()) {
 
-                long bucketId = cursor.getLong(bucketIdColumn);
-                String bucketName = cursor.getString(bucketNameColumn);
+                long bucketId       = cursor.getLong(bucketIdColumn);
+                String bucketName   = cursor.getString(bucketNameColumn);
                 String relativePath = cursor.getString(pathColumn);
 
-                if (bucketName == null || relativePath == null) continue;
 
+
+
+                if (bucketName == null || relativePath == null) continue;
+                // ... rest of filters
                 String lowerName = bucketName.toLowerCase();
                 String lowerPath = relativePath.toLowerCase();
 
@@ -161,8 +181,10 @@ public class MainActivity extends AppCompatActivity {
                 if (lowerPath.contains("android/")) continue;
                 if (lowerPath.contains("whatsapp")) continue;
                 if (lowerPath.contains("telegram")) continue;
+               
                 if (lowerName.startsWith("_")) continue;
                 if (lowerName.startsWith(".")) continue;
+
 
                 if (!albumMap.containsKey(bucketId)) {
                     albumMap.put(bucketId,
@@ -176,7 +198,30 @@ public class MainActivity extends AppCompatActivity {
             albumList.addAll(albumMap.values());
         }
 
-        recyclerView.setAdapter(new AlbumAdapter(albumList));
+        // Separate ShortList from the rest
+        AlbumItem shortListItem = null;
+        List<AlbumItem> otherAlbums = new ArrayList<>();
+
+        for (AlbumItem album : albumList) {
+            if (album.bucketName != null && album.bucketName.trim().equalsIgnoreCase("ShortList")) {
+                shortListItem = album;
+            } else {
+                otherAlbums.add(album);
+            }
+        }
+
+        // Sort the rest alphabetically
+        java.util.Collections.sort(otherAlbums,
+                (a, b) -> a.bucketName.compareToIgnoreCase(b.bucketName));
+
+        // Rebuild with ShortList pinned at top
+        List<AlbumItem> sortedList = new ArrayList<>();
+        if (shortListItem != null) {
+            sortedList.add(shortListItem);
+        }
+        sortedList.addAll(otherAlbums);
+
+        recyclerView.setAdapter(new AlbumAdapter(sortedList));
         recyclerView.addItemDecoration(
                 new GridDividerDecoration(4, 0x66FFFFFF, dpToPx(1))
         );
