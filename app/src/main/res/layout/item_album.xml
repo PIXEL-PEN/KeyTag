@@ -14,12 +14,28 @@
         android:paddingStart="8dp"
         android:paddingEnd="8dp">
 
-        <ImageView
-            android:id="@+id/imageFolder"
+        <FrameLayout
             android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/baseline_folder_24"
-            android:tint="#FFC107"/>
+            android:layout_height="48dp">
+
+            <ImageView
+                android:id="@+id/imageFolder"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/baseline_folder_24"
+                android:tint="#FFC107"/>
+
+            <ImageView
+                android:id="@+id/shortlistBadge"
+                android:layout_width="22dp"
+                android:layout_height="21dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="-4dp"
+                android:src="@drawable/baseline_star_24"
+                android:tint="#FFFFFF"
+                android:visibility="gone"/>
+        </FrameLayout>
 
         <TextView
             android:id="@+id/textAlbumName"

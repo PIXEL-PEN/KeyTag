@@ -42,8 +42,17 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
                 album.bucketName.trim().equalsIgnoreCase("ShortList");
 
 
-
-
+        if (isShortList) {
+            holder.textName.setTextColor(android.graphics.Color.parseColor("#FFC107"));
+            holder.shortlistBadge.setVisibility(View.VISIBLE);
+            holder.itemView.setBackgroundColor(
+                    android.graphics.Color.parseColor("#1AFFC107")
+            );
+        } else {
+            holder.textName.setTextColor(android.graphics.Color.WHITE);
+            holder.shortlistBadge.setVisibility(View.GONE);
+            holder.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+        }
 
 
         if (isShortList) {
@@ -84,12 +93,14 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
     static class VH extends RecyclerView.ViewHolder {
 
         ImageView imageFolder;
+        ImageView shortlistBadge;
         TextView textName;
         TextView textCount;
 
         VH(View itemView) {
             super(itemView);
             imageFolder = itemView.findViewById(R.id.imageFolder);
+            shortlistBadge = itemView.findViewById(R.id.shortlistBadge);
             textName = itemView.findViewById(R.id.textAlbumName);
             textCount = itemView.findViewById(R.id.textCount);
         }
