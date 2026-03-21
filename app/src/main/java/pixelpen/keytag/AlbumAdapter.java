@@ -79,7 +79,7 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
                                 prefs.getStringSet("hidden_buckets",
                                         new java.util.HashSet<>())
                         );
-                        hidden.add(String.valueOf(album.bucketId));
+                        hidden.add(album.bucketId + ":" + album.bucketName);
                         prefs.edit().putStringSet("hidden_buckets", hidden).apply();
                         albums.remove(position);
                         notifyItemRemoved(position);
