@@ -82,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.action_hide) {
-            android.widget.Toast.makeText(this, "Hide clicked", android.widget.Toast.LENGTH_SHORT).show();
+            showHiddenAlbumsDialog();
             return true;
         }
 
@@ -183,6 +183,12 @@ public class MainActivity extends AppCompatActivity {
                
                 if (lowerName.startsWith("_")) continue;
                 if (lowerName.startsWith(".")) continue;
+
+// Filter hidden albums
+                java.util.Set<String> hiddenBuckets = getSharedPreferences("keytag_prefs", MODE_PRIVATE)
+                        .getStringSet("hidden_buckets", new java.util.HashSet<>());
+
+                if (hiddenBuckets.contains(String.valueOf(bucketId))) continue;
 
 
                 if (!albumMap.containsKey(bucketId)) {
@@ -378,5 +384,30 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void showHiddenAlbumsDialog() {
+        android.content.SharedPreferences prefs =
+                getSharedPreferences("keytag_prefs", MODE_PRIVATE);
+        java.util.Set<String> hidden = prefs.getStringSet(
+                "hidden_buckets", new java.util.HashSet<>());
+
+        if (hidden.isEmpty()) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("Hidden Albums")
+                    .setMessage("No albums are hidden.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            return;
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Hidden Albums")
+                .setMessage(hidden.size() + " album(s) hidden.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Restore All", (dialog, which) -> {
+                    prefs.edit().remove("hidden_buckets").apply();
+                    loadAlbums();
+                })
+                .show();
+    }
 
 }

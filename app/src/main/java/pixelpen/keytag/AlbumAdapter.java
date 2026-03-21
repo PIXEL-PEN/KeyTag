@@ -37,23 +37,8 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
         holder.textName.setText(album.bucketName);
         holder.textCount.setText(album.itemCount + " items");
 
-        // ShortList gets a distinct highlight
         boolean isShortList = album.bucketName != null &&
                 album.bucketName.trim().equalsIgnoreCase("ShortList");
-
-
-        if (isShortList) {
-            holder.textName.setTextColor(android.graphics.Color.parseColor("#FFC107"));
-            holder.shortlistBadge.setVisibility(View.VISIBLE);
-            holder.itemView.setBackgroundColor(
-                    android.graphics.Color.parseColor("#1AFFC107")
-            );
-        } else {
-            holder.textName.setTextColor(android.graphics.Color.WHITE);
-            holder.shortlistBadge.setVisibility(View.GONE);
-            holder.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
-        }
-
 
         if (isShortList) {
             holder.textName.setTextColor(android.graphics.Color.parseColor("#FFC107"));
@@ -64,10 +49,12 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
             holder.itemView.setBackgroundColor(
                     android.graphics.Color.parseColor("#1AFFC107")
             );
+            holder.shortlistBadge.setVisibility(View.VISIBLE);
         } else {
             holder.textName.setTextColor(android.graphics.Color.WHITE);
             holder.imageFolder.setColorFilter(null);
             holder.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            holder.shortlistBadge.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -77,6 +64,30 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
             v.getContext().startActivity(intent);
         });
 
+        // Long-press to hide album
+        holder.itemView.setOnLongClickListener(v -> {
+            if (isShortList) return true; // ShortList cannot be hidden
+            new com.google.android.material.dialog.MaterialAlertDialogBuilder(v.getContext())
+                    .setTitle("Hide album?")
+                    .setMessage("\"" + album.bucketName + "\" will be hidden from KeyTag.")
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Hide", (dialog, which) -> {
+                        android.content.SharedPreferences prefs =
+                                v.getContext().getSharedPreferences("keytag_prefs",
+                                        android.content.Context.MODE_PRIVATE);
+                        java.util.Set<String> hidden = new java.util.HashSet<>(
+                                prefs.getStringSet("hidden_buckets",
+                                        new java.util.HashSet<>())
+                        );
+                        hidden.add(String.valueOf(album.bucketId));
+                        prefs.edit().putStringSet("hidden_buckets", hidden).apply();
+                        albums.remove(position);
+                        notifyItemRemoved(position);
+                    })
+                    .show();
+            return true;
+        });
+
         // Make tile square
         holder.itemView.post(() -> {
             int width = holder.itemView.getWidth();
@@ -84,7 +95,6 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
             holder.itemView.requestLayout();
         });
     }
-
     @Override
     public int getItemCount() {
         return albums.size();
