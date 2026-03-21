@@ -61,13 +61,20 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         long bucketId = getIntent().getLongExtra("bucket_id", -1);
         bucketName = getIntent().getStringExtra("bucket_name");
-
         MaterialToolbar toolbar = findViewById(R.id.topBar);
         toolbar.setTitle(bucketName);
 
         recyclerView = findViewById(R.id.recycler_view);
 
         layoutManager = new GridLayoutManager(this, spanCount);
+        layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
+            @Override
+            public int getSpanSize(int position) {
+                return (adapter != null && adapter.getItemViewType(position) == 0)
+                        ? layoutManager.getSpanCount()
+                        : 1;
+            }
+        });
         recyclerView.setLayoutManager(layoutManager);
 
         int spacing = (int) (5 * getResources().getDisplayMetrics().density);
@@ -79,6 +86,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
             loadSearchResults(searchUris);
         } else {
             loadImages(bucketId);
+            insertDateHeaders();
         }
 
         adapter = new ImageAdapter(images, selectedCount -> {
@@ -155,7 +163,10 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         Uri collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
 
-        String[] projection = { MediaStore.Images.Media._ID };
+        String[] projection = {
+                MediaStore.Images.Media._ID,
+                MediaStore.Images.Media.DATE_TAKEN
+        };
 
         String selection = MediaStore.Images.Media.BUCKET_ID + "=?";
         String[] selectionArgs = { String.valueOf(bucketId) };
@@ -172,20 +183,23 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         if (cursor != null) {
 
-            int idColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+            int idColumn   = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
+            int dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
 
             while (cursor.moveToNext()) {
 
-                long id = cursor.getLong(idColumn);
+                long id        = cursor.getLong(idColumn);
+                long dateTaken = cursor.getLong(dateColumn);
 
                 Uri contentUri = Uri.withAppendedPath(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                         String.valueOf(id)
                 );
 
-                images.add(new ImageItem(id, contentUri));
+                ImageItem item = new ImageItem(id, contentUri);
+                item.dateTaken = dateTaken;
+                images.add(item);
             }
-
             cursor.close();
         }
     }
@@ -448,6 +462,31 @@ public class AlbumContentsActivity extends AppCompatActivity {
         }
     }
 
+    private void insertDateHeaders() {
 
+        java.util.List<ImageItem> withHeaders = new java.util.ArrayList<>();
+
+        String lastLabel = null;
+
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("MMMM  yyyy", java.util.Locale.getDefault());
+
+        for (ImageItem item : images) {
+
+            String label = item.dateTaken > 0
+                    ? sdf.format(new java.util.Date(item.dateTaken))
+                    : "Unknown Date";
+
+            if (!label.equals(lastLabel)) {
+                withHeaders.add(ImageItem.asHeader(label));
+                lastLabel = label;
+            }
+
+            withHeaders.add(item);
+        }
+
+        images.clear();
+        images.addAll(withHeaders);
+    }
 
 }
