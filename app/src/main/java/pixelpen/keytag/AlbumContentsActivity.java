@@ -228,23 +228,21 @@ public class AlbumContentsActivity extends AppCompatActivity {
             });
 
         }).start();
-
         new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Apply", (dialog, which) -> {
 
                     String keyword = tagInput.getText().toString().trim();
-                    boolean writeExif = ((android.widget.CheckBox) dialogView.findViewById(R.id.exifToggle)).isChecked();
 
-                    android.util.Log.d("STAR_DEBUG", "Apply pressed — keyword=" + keyword + " rating=" + rating[0] + " writeExif=" + writeExif);
+                    android.util.Log.d("STAR_DEBUG", "Apply pressed — keyword=" + keyword + " rating=" + rating[0]);
 
-                    applyMetadataToSelected(keyword, rating[0], writeExif);
+                    applyMetadataToSelected(keyword, rating[0]);
 
                 })
                 .show();
     }
-    private void applyMetadataToSelected(String keyword, int rating, boolean writeExif) {
+    private void applyMetadataToSelected(String keyword, int rating) {
 
         final String normalized = keyword == null
                 ? ""

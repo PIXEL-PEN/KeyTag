@@ -43,11 +43,5 @@
         android:layout_height="wrap_content"
         android:hint="Add keyword"/>
 
-    <!-- EXIF toggle -->
-    <CheckBox
-        android:id="@+id/exifToggle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Write keywords to EXIF (optional)"
-        android:layout_marginTop="16dp"/>
+
 </LinearLayout>
