@@ -44,6 +44,7 @@
 
         <activity android:name=".VideoContentsActivity" />
 
+        <activity android:name=".AboutActivity" />
 
         <activity
             android:name=".ShareEntryActivity"

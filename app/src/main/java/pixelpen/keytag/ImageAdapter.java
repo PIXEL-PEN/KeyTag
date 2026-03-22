@@ -74,13 +74,78 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         vh.selectionCircle.setVisibility(item.isSelected ? View.VISIBLE : View.GONE);
         vh.checkMark.setVisibility(item.isSelected ? View.VISIBLE : View.GONE);
 
-        vh.itemView.setOnClickListener(v -> {
+        ImageView starOverlay = vh.itemView.findViewById(R.id.starOverlay);
 
+        if (item.isVideo) {
+            // Show play badge, skip star lookup
+            starOverlay.setVisibility(View.VISIBLE);
+            starOverlay.setImageResource(android.R.drawable.ic_media_play);
+            starOverlay.setColorFilter(
+                    android.graphics.Color.WHITE,
+                    android.graphics.PorterDuff.Mode.SRC_IN
+            );
+        } else {
+            // Restore star drawable in case recycled from video
+            starOverlay.setImageResource(R.drawable.baseline_star_24);
+            starOverlay.setColorFilter(
+                    android.graphics.Color.WHITE,
+                    android.graphics.PorterDuff.Mode.SRC_IN
+            );
+            new Thread(() -> {
+                AppDatabase db = AppDatabase.getInstance(vh.imageView.getContext());
+                TaggingDao dao = db.taggingDao();
+
+                long mediaId = MediaStoreUtil.getMediaStoreId(
+                        vh.imageView.getContext(), item.uri
+                );
+
+                Integer tmpLevel = null;
+
+                if (mediaId != -1) {
+                    tmpLevel = dao.getQualityByMediaStoreId(mediaId);
+                    if (tmpLevel == null) {
+                        dao.updateMediaStoreId(item.uri.toString(), mediaId);
+                    }
+                }
+
+                if (tmpLevel == null) {
+                    tmpLevel = dao.getQuality(item.uri.toString());
+                }
+
+                final Integer level = tmpLevel;
+
+                vh.itemView.post(() -> {
+                    if (level != null && level > 0) {
+                        starOverlay.setVisibility(View.VISIBLE);
+                    } else {
+                        starOverlay.setVisibility(View.GONE);
+                    }
+                });
+            }).start();
+        }
+
+        vh.itemView.setOnClickListener(v -> {
             if (selectionMode) {
                 toggleSelection(holder.getAdapterPosition());
             } else {
-
                 android.content.Context context = v.getContext();
+
+                if (item.isVideo) {
+                    android.content.Intent intent =
+                            new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                    intent.setDataAndType(item.uri, "video/*");
+                    intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        context.startActivity(intent);
+                    } catch (Exception e) {
+                        android.widget.Toast.makeText(
+                                context, "No video player found",
+                                android.widget.Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                    return;
+                }
+
                 android.content.Intent intent =
                         new android.content.Intent(context, ImageViewerActivity.class);
 
@@ -91,7 +156,6 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     }
                 }
 
-                // Calculate position excluding headers
                 int imagePosition = 0;
                 for (int i = 0; i < holder.getAdapterPosition(); i++) {
                     if (!images.get(i).isHeader) imagePosition++;
@@ -107,44 +171,7 @@ public class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             toggleSelection(holder.getAdapterPosition());
             return true;
         });
-
-        ImageView starOverlay = vh.itemView.findViewById(R.id.starOverlay);
-
-        new Thread(() -> {
-
-            AppDatabase db = AppDatabase.getInstance(vh.imageView.getContext());
-            TaggingDao dao = db.taggingDao();
-
-            long mediaId = MediaStoreUtil.getMediaStoreId(
-                    vh.imageView.getContext(), item.uri
-            );
-
-            Integer tmpLevel = null;
-
-            if (mediaId != -1) {
-                tmpLevel = dao.getQualityByMediaStoreId(mediaId);
-                if (tmpLevel == null) {
-                    dao.updateMediaStoreId(item.uri.toString(), mediaId);
-                }
-            }
-
-            if (tmpLevel == null) {
-                tmpLevel = dao.getQuality(item.uri.toString());
-            }
-
-            final Integer level = tmpLevel;
-
-            vh.itemView.post(() -> {
-                if (level != null && level > 0) {
-                    starOverlay.setVisibility(View.VISIBLE);
-                } else {
-                    starOverlay.setVisibility(View.GONE);
-                }
-            });
-
-        }).start();
     }
-
     @Override
     public int getItemCount() {
         return images.size();

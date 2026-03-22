@@ -356,14 +356,20 @@ public class AlbumContentsActivity extends AppCompatActivity {
         }).start();
     }
     private void loadSearchResults(ArrayList<String> uriStrings) {
-
         images.clear();
-
         for (String uriString : uriStrings) {
-
             Uri uri = Uri.parse(uriString);
-
-            images.add(new ImageItem(0, uri));
+            ImageItem item = new ImageItem(0, uri);
+            // Detect video by URI path
+            String uriLower = uriString.toLowerCase();
+            if (uriString.contains(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())
+                    || uriLower.endsWith(".mp4")
+                    || uriLower.endsWith(".mov")
+                    || uriLower.endsWith(".avi")
+                    || uriLower.endsWith(".mkv")) {
+                item.isVideo = true;
+            }
+            images.add(item);
         }
     }
     private void updateDialogStars(android.view.View dialogView, int level) {

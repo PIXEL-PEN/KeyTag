@@ -47,20 +47,26 @@ public class VideoContentsActivity extends AppCompatActivity {
 
         loadVideos();
 
-        adapter = new VideoAdapter(videos, uri -> {
-            // Tap to open in native player
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(uri, "video/*");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            try {
-                startActivity(intent);
-            } catch (Exception e) {
-                android.widget.Toast.makeText(
-                        this, "No video player found",
-                        android.widget.Toast.LENGTH_SHORT
-                ).show();
-            }
-        });
+        adapter = new VideoAdapter(videos,
+                uri -> {
+                    // Tap — play in native player
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(uri, "video/*");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    try {
+                        startActivity(intent);
+                    } catch (Exception e) {
+                        android.widget.Toast.makeText(
+                                this, "No video player found",
+                                android.widget.Toast.LENGTH_SHORT
+                        ).show();
+                    }
+                },
+                item -> {
+                    // Long press — show TAG dialog
+                    showTagDialog(item);
+                }
+        );
 
 
         recyclerView.setAdapter(adapter);
@@ -275,6 +281,133 @@ public class VideoContentsActivity extends AppCompatActivity {
             });
         }).start();
     }
+    private void showTagDialog(ImageItem item) {
 
+        android.view.View dialogView =
+                getLayoutInflater().inflate(R.layout.dialog_batch_tag, null);
+
+        android.widget.AutoCompleteTextView tagInput =
+                dialogView.findViewById(R.id.tagInput);
+
+        final int[] rating = {0};
+
+        android.view.View ratingRow = dialogView.findViewById(R.id.ratingRow);
+        ratingRow.setOnClickListener(v -> {
+            rating[0] = (rating[0] + 1) % 4;
+            updateDialogStars(dialogView, rating[0]);
+        });
+
+        new Thread(() -> {
+            pixelpen.keytag.db.AppDatabase db =
+                    pixelpen.keytag.db.AppDatabase.getInstance(getApplicationContext());
+            pixelpen.keytag.db.TaggingDao dao = db.taggingDao();
+            java.util.List<String> keywords = dao.getAllKeywordNames();
+
+            runOnUiThread(() -> {
+                android.widget.ArrayAdapter<String> kwAdapter =
+                        new android.widget.ArrayAdapter<>(
+                                this,
+                                android.R.layout.simple_dropdown_item_1line,
+                                keywords
+                        );
+                tagInput.setAdapter(kwAdapter);
+            });
+        }).start();
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    String keyword = tagInput.getText().toString().trim();
+                    applyVideoTag(item, keyword, rating[0]);
+                })
+                .show();
+    }
+
+    private void updateDialogStars(android.view.View dialogView, int level) {
+        android.widget.ImageView star1 = dialogView.findViewById(R.id.dialogStar1);
+        android.widget.ImageView star2 = dialogView.findViewById(R.id.dialogStar2);
+        android.widget.ImageView star3 = dialogView.findViewById(R.id.dialogStar3);
+
+        int filled = R.drawable.baseline_star_24;
+        int empty  = R.drawable.baseline_star_border_24;
+        int gold   = android.graphics.Color.parseColor("#FFC107");
+        int white  = android.graphics.Color.WHITE;
+
+        star1.setImageResource(level >= 1 ? filled : empty);
+        star1.setColorFilter(level >= 1 ? gold : white);
+        star2.setImageResource(level >= 2 ? filled : empty);
+        star2.setColorFilter(level >= 2 ? gold : white);
+        star3.setImageResource(level >= 3 ? filled : empty);
+        star3.setColorFilter(level >= 3 ? gold : white);
+    }
+
+    private void applyVideoTag(ImageItem item, String keyword, int rating) {
+
+        final String normalized = keyword == null ? "" : keyword.trim().toLowerCase();
+
+        new Thread(() -> {
+            pixelpen.keytag.db.AppDatabase db =
+                    pixelpen.keytag.db.AppDatabase.getInstance(getApplicationContext());
+            pixelpen.keytag.db.TaggingDao dao = db.taggingDao();
+
+            String uriString = item.uri.toString();
+
+            long mediaId = pixelpen.keytag.util.MediaStoreUtil.getMediaStoreId(
+                    getApplicationContext(),
+                    item.uri
+            );
+
+            pixelpen.keytag.db.ImageEntity image = null;
+
+            if (mediaId != -1) {
+                image = dao.getImageByMediaStoreId(mediaId);
+            }
+            if (image == null) {
+                image = dao.getImageByUri(uriString);
+            }
+            if (image == null) {
+                dao.insertImage(new pixelpen.keytag.db.ImageEntity(
+                        uriString, System.currentTimeMillis()));
+                if (mediaId != -1) {
+                    dao.updateMediaStoreId(uriString, mediaId);
+                    image = dao.getImageByMediaStoreId(mediaId);
+                } else {
+                    image = dao.getImageByUri(uriString);
+                }
+            }
+            if (image == null) return;
+
+            // Apply rating
+            if (mediaId != -1) {
+                dao.updateQualityByMediaStoreId(mediaId, rating);
+            } else {
+                dao.updateQuality(uriString, rating);
+            }
+
+            // Apply keyword
+            if (!normalized.isEmpty()) {
+                pixelpen.keytag.db.KeywordEntity kwEntity =
+                        dao.getKeywordByName(normalized);
+                if (kwEntity == null) {
+                    dao.insertKeyword(new pixelpen.keytag.db.KeywordEntity(normalized, 0));
+                    kwEntity = dao.getKeywordByName(normalized);
+                }
+                if (kwEntity != null) {
+                    dao.insertCrossRef(new pixelpen.keytag.db.ImageKeywordCrossRef(
+                            image.id, kwEntity.id));
+                    dao.incrementUsage(kwEntity.id);
+                }
+            }
+
+            runOnUiThread(() ->
+                    android.widget.Toast.makeText(
+                            this, "Metadata applied",
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show()
+            );
+
+        }).start();
+    }
 
 }

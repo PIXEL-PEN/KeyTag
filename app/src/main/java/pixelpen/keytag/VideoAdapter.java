@@ -20,12 +20,20 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VH> {
         void onVideoClick(Uri uri);
     }
 
+    public interface OnVideoLongClickListener {
+        void onVideoLongClick(ImageItem item);
+    }
+
     private final List<ImageItem> videos;
     private final OnVideoClickListener listener;
+    private final OnVideoLongClickListener longListener;
 
-    public VideoAdapter(List<ImageItem> videos, OnVideoClickListener listener) {
+    public VideoAdapter(List<ImageItem> videos,
+                        OnVideoClickListener listener,
+                        OnVideoLongClickListener longListener) {
         this.videos = videos;
         this.listener = listener;
+        this.longListener = longListener;
     }
 
     @NonNull
@@ -67,7 +75,6 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VH> {
                 android.graphics.PorterDuff.Mode.SRC_IN
         );
 
-        // Show duration
         if (item.duration > 0) {
             long secs = item.duration / 1000;
             String dur = String.format(java.util.Locale.getDefault(),
@@ -79,6 +86,11 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VH> {
         }
 
         holder.itemView.setOnClickListener(v -> listener.onVideoClick(item.uri));
+
+        holder.itemView.setOnLongClickListener(v -> {
+            longListener.onVideoLongClick(item);
+            return true;
+        });
     }
 
     @Override

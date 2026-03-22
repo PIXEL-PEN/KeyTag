@@ -18,25 +18,25 @@ public class MediaStoreUtil {
                 if (lastSegment != null) {
                     try {
                         return Long.parseLong(lastSegment);
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
 
-            // For exotic URIs (e.g. com.miui.gallery.open),
-            // extract filename and look up in MediaStore by DISPLAY_NAME
+            // For exotic URIs extract filename and look up by DISPLAY_NAME
             String lastSegment = uri.getLastPathSegment();
             if (lastSegment == null) return -1;
 
-            // lastSegment may be a full path — extract just the filename
             String displayName = lastSegment.contains("/")
                     ? lastSegment.substring(lastSegment.lastIndexOf("/") + 1)
                     : lastSegment;
 
+            // Try images first
             Cursor cursor = context.getContentResolver().query(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                    new String[]{ MediaStore.Images.Media._ID },
+                    new String[]{MediaStore.Images.Media._ID},
                     MediaStore.Images.Media.DISPLAY_NAME + "=?",
-                    new String[]{ displayName },
+                    new String[]{displayName},
                     MediaStore.Images.Media.DATE_TAKEN + " DESC"
             );
 
@@ -50,9 +50,29 @@ public class MediaStoreUtil {
                 }
             }
 
+            // Try videos as fallback
+            Cursor videoCursor = context.getContentResolver().query(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    new String[]{MediaStore.Video.Media._ID},
+                    MediaStore.Video.Media.DISPLAY_NAME + "=?",
+                    new String[]{displayName},
+                    MediaStore.Video.Media.DATE_TAKEN + " DESC"
+            );
+
+            if (videoCursor != null) {
+                try {
+                    if (videoCursor.moveToFirst()) {
+                        return videoCursor.getLong(0);
+                    }
+                } finally {
+                    videoCursor.close();
+                }
+            }
+
         } catch (Exception ignored) {
         }
 
         return -1;
     }
+
 }
