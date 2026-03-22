@@ -48,16 +48,24 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
 
         if (android.os.Build.VERSION.SDK_INT >= 33) {
-            if (checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES)
-                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            boolean hasImages = checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+            boolean hasVideo = checkSelfPermission(android.Manifest.permission.READ_MEDIA_VIDEO)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+            if (!hasImages || !hasVideo) {
                 requestPermissions(
-                        new String[]{android.Manifest.permission.READ_MEDIA_IMAGES},
+                        new String[]{
+                                android.Manifest.permission.READ_MEDIA_IMAGES,
+                                android.Manifest.permission.READ_MEDIA_VIDEO
+                        },
                         100
                 );
             } else {
                 loadAlbums();
             }
         } else {
+
+
             if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
                     != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(
@@ -258,16 +266,38 @@ public class MainActivity extends AppCompatActivity {
                     (a, b) -> a.bucketName.compareToIgnoreCase(b.bucketName));
         }
 
-        List<AlbumItem> sortedList = new ArrayList<>();
+        final List<AlbumItem> sortedList = new ArrayList<>();
         if (shortListItem != null) {
             sortedList.add(shortListItem);
         }
         sortedList.addAll(otherAlbums);
 
-        recyclerView.setAdapter(new AlbumAdapter(sortedList));
-        recyclerView.addItemDecoration(
-                new GridDividerDecoration(4, 0x66FFFFFF, dpToPx(1))
-        );
+        // Inject Videos-fin entry
+        final AlbumItem finalShortListItem = shortListItem;
+        new Thread(() -> {
+
+            android.database.Cursor vc = getContentResolver().query(
+                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                    new String[]{ MediaStore.Video.Media._ID },
+                    MediaStore.Video.Media.BUCKET_DISPLAY_NAME + "=?",
+                    new String[]{ "Videos-fin" },
+                    null
+            );
+
+            int videoCount = vc != null ? vc.getCount() : 0;
+            if (vc != null) vc.close();
+
+            runOnUiThread(() -> {
+                AlbumItem videos = new AlbumItem(-2, "Videos-fin", null, videoCount);
+                sortedList.add(finalShortListItem != null ? 1 : 0, videos);
+
+                recyclerView.setAdapter(new AlbumAdapter(sortedList));
+                recyclerView.addItemDecoration(
+                        new GridDividerDecoration(4, 0x66FFFFFF, dpToPx(1))
+                );
+            });
+
+        }).start();
     }
 
     private int dpToPx(int dp) {

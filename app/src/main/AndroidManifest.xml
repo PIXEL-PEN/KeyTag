@@ -8,7 +8,12 @@
         android:maxSdkVersion="32" />
 
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_MEDIA_IMAGES" />
+
 
 
     <application
@@ -37,7 +42,7 @@
 
         <activity android:name=".ImageViewerActivity"/>
 
-
+        <activity android:name=".VideoContentsActivity" />
 
 
         <activity

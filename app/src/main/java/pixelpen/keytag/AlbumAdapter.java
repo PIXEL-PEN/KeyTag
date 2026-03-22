@@ -50,18 +50,39 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
                     android.graphics.Color.parseColor("#1AFFC107")
             );
             holder.shortlistBadge.setVisibility(View.VISIBLE);
+        } else if (album.bucketId == -2) {
+            // Videos-fin tile
+            holder.textName.setTextColor(android.graphics.Color.parseColor("#64B5F6"));
+            holder.imageFolder.setImageResource(android.R.drawable.ic_media_play);
+            holder.imageFolder.setColorFilter(
+                    android.graphics.Color.parseColor("#64B5F6"),
+                    android.graphics.PorterDuff.Mode.SRC_IN
+            );
+            holder.itemView.setBackgroundColor(
+                    android.graphics.Color.parseColor("#1A64B5F6")
+            );
+            holder.shortlistBadge.setVisibility(View.GONE);
         } else {
             holder.textName.setTextColor(android.graphics.Color.WHITE);
-            holder.imageFolder.setColorFilter(null);
+            holder.imageFolder.setImageResource(R.drawable.baseline_folder_24);
+            holder.imageFolder.setColorFilter(
+                    android.graphics.Color.parseColor("#FFC107"),
+                    android.graphics.PorterDuff.Mode.SRC_IN
+            );
             holder.itemView.setBackgroundColor(android.graphics.Color.TRANSPARENT);
             holder.shortlistBadge.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), AlbumContentsActivity.class);
-            intent.putExtra("bucket_id", album.bucketId);
-            intent.putExtra("bucket_name", album.bucketName);
-            v.getContext().startActivity(intent);
+            if (album.bucketId == -2) {
+                Intent intent = new Intent(v.getContext(), VideoContentsActivity.class);
+                v.getContext().startActivity(intent);
+            } else {
+                Intent intent = new Intent(v.getContext(), AlbumContentsActivity.class);
+                intent.putExtra("bucket_id", album.bucketId);
+                intent.putExtra("bucket_name", album.bucketName);
+                v.getContext().startActivity(intent);
+            }
         });
 
         // Long-press to hide album

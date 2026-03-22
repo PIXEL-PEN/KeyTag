@@ -7,6 +7,9 @@ public class ImageItem {
     public Uri uri;
     public boolean isSelected = false;
     public long dateTaken = 0;
+    public boolean isVideo = false;
+    public long duration = 0;
+    public String bucketName = null;
 
     // Header support
     public boolean isHeader = false;
