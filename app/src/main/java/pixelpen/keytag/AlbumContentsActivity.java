@@ -1,5 +1,6 @@
 package pixelpen.keytag;
 
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import pixelpen.keytag.db.ImageEntity;
 import pixelpen.keytag.db.KeywordEntity;
 import pixelpen.keytag.db.ImageKeywordCrossRef;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import pixelpen.keytag.util.MediaStoreUtil;
 
@@ -501,11 +503,14 @@ public class AlbumContentsActivity extends AppCompatActivity {
             openFirstImageInGallery();
             return true;
         }
+        if (item.getItemId() == R.id.action_search) {
+            showGlobalSearchDialog();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
     private void openFirstImageInGallery() {
-        // Skip header items to find first real image
         for (ImageItem item : images) {
             if (item.isHeader) continue;
             android.content.Intent intent =
@@ -523,4 +528,112 @@ public class AlbumContentsActivity extends AppCompatActivity {
             return;
         }
     }
+
+    private void showGlobalSearchDialog() {
+
+        android.view.View dialogView =
+                getLayoutInflater().inflate(R.layout.dialog_global_search, null);
+
+        AutoCompleteTextView searchInput =
+                dialogView.findViewById(R.id.searchInput);
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            java.util.List<String> keywords = dao.getAllKeywordNames();
+
+            runOnUiThread(() -> {
+
+                ArrayAdapter<String> kwAdapter =
+                        new ArrayAdapter<>(
+                                this,
+                                android.R.layout.simple_dropdown_item_1line,
+                                keywords
+                        );
+
+                searchInput.setAdapter(kwAdapter);
+
+                TextView star1 = dialogView.findViewById(R.id.star1);
+                TextView star2 = dialogView.findViewById(R.id.star2);
+                TextView star3 = dialogView.findViewById(R.id.star3);
+
+                star1.setOnClickListener(v -> searchByStars(1));
+                star2.setOnClickListener(v -> searchByStars(2));
+                star3.setOnClickListener(v -> searchByStars(3));
+            });
+
+        }).start();
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Search by keyword")
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Search", (dialog, which) -> {
+                    String keyword =
+                            searchInput.getText().toString().trim().toLowerCase();
+                    if (!keyword.isEmpty()) {
+                        performGlobalSearch(keyword);
+                    }
+                })
+                .show();
+    }
+
+    private void performGlobalSearch(String keyword) {
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            java.util.List<String> uris = dao.getImageUrisForKeyword(keyword);
+
+            runOnUiThread(() -> {
+
+                if (uris.isEmpty()) {
+                    android.widget.Toast.makeText(
+                            this,
+                            "No results found",
+                            android.widget.Toast.LENGTH_SHORT
+                    ).show();
+                    return;
+                }
+
+                Intent intent = new Intent(this, AlbumContentsActivity.class);
+                intent.putStringArrayListExtra(
+                        "search_results",
+                        new ArrayList<>(uris)
+                );
+                intent.putExtra("bucket_name", "Search Results");
+                startActivity(intent);
+            });
+
+        }).start();
+    }
+
+    private void searchByStars(int level) {
+
+        new Thread(() -> {
+
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            List<String> results = dao.getUrisByStarLevel(level);
+
+            runOnUiThread(() -> {
+
+                Intent intent = new Intent(this, AlbumContentsActivity.class);
+                intent.putStringArrayListExtra(
+                        "search_results",
+                        new ArrayList<>(results)
+                );
+                intent.putExtra("bucket_name", "Search Results");
+                startActivity(intent);
+            });
+
+        }).start();
+    }
+
 }
+
