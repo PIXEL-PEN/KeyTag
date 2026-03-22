@@ -63,9 +63,9 @@ public class AlbumContentsActivity extends AppCompatActivity {
         bucketName = getIntent().getStringExtra("bucket_name");
         MaterialToolbar toolbar = findViewById(R.id.topBar);
         toolbar.setTitle(bucketName);
+        setSupportActionBar(toolbar);
 
         recyclerView = findViewById(R.id.recycler_view);
-
         layoutManager = new GridLayoutManager(this, spanCount);
         layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
             @Override
@@ -114,12 +114,13 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 toolbar.setTitle(bucketName);
                 toolbar.setNavigationIcon(null);
             }
-        });
+
+        });  // ← closes ImageAdapter callback
 
         recyclerView.setAdapter(adapter);
         recyclerView.setHasFixedSize(true);
 
-        // 🔥 Share mode auto-launch dialog AFTER adapter ready
+        // Share mode auto-launch dialog AFTER adapter ready
         if (shareMode && searchUris != null && !searchUris.isEmpty()) {
             recyclerView.post(() -> {
                 adapter.selectAll();
@@ -488,5 +489,38 @@ public class AlbumContentsActivity extends AppCompatActivity {
         images.clear();
         images.addAll(withHeaders);
     }
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_album_contents, menu);
+        return true;
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        if (item.getItemId() == R.id.action_open_gallery) {
+            openFirstImageInGallery();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void openFirstImageInGallery() {
+        // Skip header items to find first real image
+        for (ImageItem item : images) {
+            if (item.isHeader) continue;
+            android.content.Intent intent =
+                    new android.content.Intent(android.content.Intent.ACTION_VIEW);
+            intent.setDataAndType(item.uri, "image/*");
+            intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            try {
+                startActivity(intent);
+            } catch (Exception e) {
+                android.widget.Toast.makeText(
+                        this, "No gallery app found",
+                        android.widget.Toast.LENGTH_SHORT
+                ).show();
+            }
+            return;
+        }
+    }
 }
