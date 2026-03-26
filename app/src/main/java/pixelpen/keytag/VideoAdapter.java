@@ -75,6 +75,7 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VH> {
                 android.graphics.PorterDuff.Mode.SRC_IN
         );
 
+        // Duration
         if (item.duration > 0) {
             long secs = item.duration / 1000;
             String dur = String.format(java.util.Locale.getDefault(),
@@ -83,6 +84,14 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VH> {
             holder.durationLabel.setVisibility(View.VISIBLE);
         } else {
             holder.durationLabel.setVisibility(View.GONE);
+        }
+
+        // Title from display name
+        if (item.headerLabel != null && !item.headerLabel.isEmpty()) {
+            holder.videoTitle.setText(item.headerLabel);
+            holder.videoTitle.setVisibility(View.VISIBLE);
+        } else {
+            holder.videoTitle.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> listener.onVideoClick(item.uri));
@@ -102,12 +111,14 @@ public class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.VH> {
         ImageView imageView;
         ImageView starOverlay;
         TextView durationLabel;
+        TextView videoTitle;
 
         VH(View itemView) {
             super(itemView);
             imageView     = itemView.findViewById(R.id.imageView);
             starOverlay   = itemView.findViewById(R.id.starOverlay);
             durationLabel = itemView.findViewById(R.id.durationLabel);
+            videoTitle    = itemView.findViewById(R.id.videoTitle);
         }
     }
 }

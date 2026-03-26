@@ -32,11 +32,14 @@ public class VideoContentsActivity extends AppCompatActivity {
         getWindow().setDecorFitsSystemWindows(true);
         setContentView(R.layout.activity_album_contents);
 
+
         MaterialToolbar toolbar = findViewById(R.id.topBar);
         toolbar.setTitle("Videos-fin");
         setSupportActionBar(toolbar);
 
         recyclerView = findViewById(R.id.recycler_view);
+        recyclerView.setBackgroundColor(android.graphics.Color.parseColor("#E2E2DC"));
+
         layoutManager = new GridLayoutManager(this, spanCount);
         recyclerView.setLayoutManager(layoutManager);
 
@@ -106,7 +109,8 @@ public class VideoContentsActivity extends AppCompatActivity {
                         MediaStore.Video.Media._ID,
                         MediaStore.Video.Media.DATE_TAKEN,
                         MediaStore.Video.Media.DURATION,
-                        MediaStore.Video.Media.BUCKET_DISPLAY_NAME
+                        MediaStore.Video.Media.BUCKET_DISPLAY_NAME,
+                        MediaStore.Video.Media.DISPLAY_NAME
                 },
                 MediaStore.Video.Media.BUCKET_DISPLAY_NAME + "=?",
                 new String[]{ "Videos-fin" },
@@ -114,16 +118,18 @@ public class VideoContentsActivity extends AppCompatActivity {
         );
 
         if (cursor != null) {
-            int idCol     = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-            int dateCol   = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_TAKEN);
-            int durCol    = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
-            int bucketCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME);
+            int idCol      = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
+            int dateCol    = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_TAKEN);
+            int durCol     = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
+            int bucketCol  = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME);
+            int nameCol    = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
 
             while (cursor.moveToNext()) {
-                long id        = cursor.getLong(idCol);
-                long dateTaken = cursor.getLong(dateCol);
-                long duration  = cursor.getLong(durCol);
-                String bucket  = cursor.getString(bucketCol);
+                long id          = cursor.getLong(idCol);
+                long dateTaken   = cursor.getLong(dateCol);
+                long duration    = cursor.getLong(durCol);
+                String bucket    = cursor.getString(bucketCol);
+                String displayName = cursor.getString(nameCol);
 
                 Uri uri = Uri.withAppendedPath(
                         MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
@@ -135,6 +141,13 @@ public class VideoContentsActivity extends AppCompatActivity {
                 item.isVideo    = true;
                 item.duration   = duration;
                 item.bucketName = bucket;
+
+                if (displayName != null && displayName.contains(".")) {
+                    item.headerLabel = displayName.substring(0, displayName.lastIndexOf("."));
+                } else {
+                    item.headerLabel = displayName;
+                }
+
                 videos.add(item);
             }
             cursor.close();
