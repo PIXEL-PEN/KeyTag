@@ -1,16 +1,38 @@
 # KeyTag
 
-**A lightweight Digital Asset Manager (DAM) for Android**
+**Batch keyword tagging for Android photos — the feature every gallery app is missing.**
 
-KeyTag works alongside your native gallery app — adding keywords, star ratings, and metadata to your photos and videos without replacing the gallery experience you already use.
+Share any selection of images from your native gallery directly to KeyTag. Assign keywords, star ratings and category in one step. Keywords are written as industry-standard XMP sidecar files alongside your images — tag once, search anywhere, on any device, in any application.
 
 ---
 
 ## Overview
 
-Most Android gallery apps are great at displaying photos but poor at organising them with searchable metadata. KeyTag fills that gap. It reads the same albums and folders your native gallery uses, lets you tag and rate images in batch, and makes your entire photo library searchable by keyword and star rating.
+Every major Android gallery app lets you organise photos into albums. None of them let you keyword tag a batch of images. This is a glaring omission — keywords are the foundation of any serious photo workflow. Without them, finding a specific image months later means scrolling through hundreds of thumbnails hoping to recognise it.
 
-KeyTag is a free, open source. It is not intended to replace your native gallery — it is designed to complement it.
+KeyTag solves this. It adds a metadata layer on top of whatever gallery app you already use, without replacing it. It is free and open source.
+
+---
+
+## Core Workflow
+
+KeyTag is built around three complementary tools. Use one, two, or all three depending on your workflow:
+
+### 1. Keywording — the primary feature
+
+Select any images in your native gallery. Tap Share → KeyTag. A batch tag dialog opens immediately. Type a keyword, tap Apply. Done.
+
+Keywords are stored locally in KeyTag's database for instant search. They are also written as industry-standard XMP sidecar files alongside the original image files. This means your keywords are not locked inside the app — move an image to another device, open it in Lightroom, Capture One, or any XMP-aware application, and the keywords are already there. Tag once, search anywhere.
+
+### 2. Categorization — albums as workflow
+
+KeyTag reads all your native gallery albums automatically. No setup, no import. Albums you create in your native gallery appear in KeyTag instantly. The TAG dialog includes a Category field — assign an intended destination album at tagging time as a reminder for the native gallery move.
+
+**ShortList** is a special folder KeyTag creates in your Pictures directory. Use it as a quick first-pass inbox — move images there from your native gallery Favorites or any other source, then open ShortList in KeyTag to keyword and categorise them in batch before moving them to their final album.
+
+### 3. Starring — quality rating
+
+Star images 1–3 from the viewer or in batch via the TAG dialog. Search by star rating across your entire library. Useful for filtering your best shots from a shoot without having to browse album by album.
 
 ---
 
@@ -40,24 +62,24 @@ KeyTag is a free, open source. It is not intended to replace your native gallery
 - Assign star rating (0-3) to all selected images
 - Add keyword with autocomplete from existing keywords
 - Assign a category from existing Pictures albums
-- Keywords written as XMP sidecar files for portability
+- Keywords written as XMP sidecar files alongside originals — portable to any platform
 
 ### Search
 - Global keyword search across all albums
 - Search by star rating (1, 2, or 3 stars)
 - Search accessible from main screen and album toolbar
-- Results display in standard grid with star and play badges
+- Results display in standard grid with star and video badges
 
 ### Video Support
-- Videos-fin folder shows curated video clips
-- Video thumbnails with duration overlay
+- Videos-fin folder shows curated video clips with duration labels and filename
 - Tap to play in native video player
 - Long press to tag with keywords and star rating
 - Tagged videos appear in keyword and star search results
 
 ### Share Integration
-- Share images directly from any app to KeyTag
-- TAG dialog opens automatically for shared images
+- Select images in your native gallery, tap Share → KeyTag
+- TAG dialog opens automatically for the entire selection
+- Keywords written to XMP sidecar files — searchable on any device, any platform
 - Works on Vivo, Xiaomi, and standard Android devices
 - Resolves manufacturer-specific URI formats to stable MediaStore IDs
 
@@ -75,20 +97,20 @@ KeyTag is a free, open source. It is not intended to replace your native gallery
 ### Database Schema
 
 images
-    id              long (primary key)
-    uri             text
-    mediaStoreId    long (stable cross-manufacturer identifier)
-    qualityLevel    int (0-3 star rating)
-    dateAdded       long
+id              long (primary key)
+uri             text
+mediaStoreId    long (stable cross-manufacturer identifier)
+qualityLevel    int (0-3 star rating)
+dateAdded       long
 
 keywords
-    id              long (primary key)
-    name            text
-    usageCount      int
+id              long (primary key)
+name            text
+usageCount      int
 
 image_keywords      (cross-reference table)
-    imageId         long
-    keywordId       long
+imageId         long
+keywordId       long
 
 ### Key Design Decision — MediaStore ID
 
@@ -121,7 +143,7 @@ WRITE_MEDIA_IMAGES
 ## Setup
 
 ### ShortList Folder
-KeyTag automatically creates a ShortList folder inside your device's Pictures/ directory on first launch. Use your native gallery to move images there as a first-pass selection, then open ShortList in KeyTag to tag and rate them.
+KeyTag automatically creates a ShortList folder inside your device's Pictures/ directory on first launch. Move images there from your native gallery as a quick first-pass selection, then open ShortList in KeyTag to keyword and rate them in batch.
 
 ### Videos-fin Folder
 Create a folder called Videos-fin inside Pictures/ using your native gallery or a file manager. Move final edited video clips there. KeyTag will display them in the Videos-fin tile on the main screen.
@@ -134,26 +156,16 @@ Tap the menu on the main screen and select Manage Folders to add folders from ou
 ## Known Limitations
 
 ### Manufacturer-Specific Behaviour
-Xiaomi (MIUI): The native gallery creates virtual albums stored internally rather than as filesystem folders. Albums created through Xiaomi's gallery UI appear under Pictures/gallery/owner/ in MediaStore. KeyTag filters this path — albums intended for KeyTag should be created as real filesystem folders using a file manager.
+Xiaomi (MIUI): The native gallery creates virtual albums stored internally. On first launch some system folders may appear in the album grid. Long press any unwanted folder to hide it — hidden folders stay hidden across sessions.
 
-Folder names: Some folder and album names are currently hardcoded (ShortList, Videos-fin). A future release will make these configurable in Settings.
+### Folder Names
+ShortList and Videos-fin are currently hardcoded. A future release will make these configurable in Settings.
 
 ### Video Metadata
 The EXIF panel does not yet display video-specific metadata (codec, framerate, resolution). Planned for a future release.
 
 ### Category / Pending Moves
-The TAG dialog includes a Category spinner that stores an intended album assignment. This is a planning feature only — KeyTag does not move files. The actual file move must be done in the native gallery.
-
----
-
-## Workflow
-
-1. Shoot photos and video
-2. Browse in native gallery, create albums, move images into them
-3. Open KeyTag — albums appear automatically
-4. Select images, tap TAG, assign keywords and star rating
-5. Search by keyword or star rating to find images across all albums
-6. Move images to final album in native gallery guided by category tag
+The TAG dialog Category field stores an intended album assignment as a reminder. KeyTag does not move files — the actual move must be done in the native gallery.
 
 ---
 
@@ -161,8 +173,7 @@ The TAG dialog includes a Category spinner that stores an intended album assignm
 
 - Configurable folder names in Settings
 - Video metadata panel
-- Pending moves view
-- Auto-clear pending status when file is moved
+- Pending moves view with auto-clear when MediaStore detects file moved
 - Remove debug logs before production release
 - Play Store release preparation
 - UI polish pass
@@ -171,7 +182,7 @@ The TAG dialog includes a Category spinner that stores an intended album assignm
 
 ## Contributing
 
-This is a hobby project and contributions are welcome. Please open an issue before submitting a pull request.
+Open an issue before submitting a pull request. This is a focused tool — new features should serve the core keywording and categorisation workflow.
 
 ---
 
