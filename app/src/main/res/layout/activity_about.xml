@@ -46,7 +46,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="What is KeyTag?"
+                android:text="The feature every gallery app is missing."
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
@@ -58,12 +58,63 @@
                 android:textColor="#CCCCCC"
                 android:lineSpacingMultiplier="1.5"
                 android:layout_marginBottom="24dp"
-                android:text="KeyTag is a lightweight Digital Asset Manager (DAM) for Android. It works alongside your native gallery app — adding keywords, star ratings and metadata to your photos and videos without replacing the gallery experience you already use."/>
+                android:text="Every Android gallery app lets you organise photos into albums. None of them let you keyword tag a batch of images. KeyTag fills that gap — adding keywords, star ratings and metadata on top of whatever gallery app you already use, without replacing it."/>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Basic Workflow"
+                android:text="1. Keywording"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFC107"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#CCCCCC"
+                android:lineSpacingMultiplier="1.5"
+                android:layout_marginBottom="24dp"
+                android:text="Select any images in your native gallery. Tap Share → KeyTag. A batch tag dialog opens immediately. Type a keyword, tap Apply. Done.\n\nKeywords are stored locally for instant search and written as XMP sidecar files alongside your images. Move an image to another device or open it in Lightroom or Capture One — the keywords are already there. Tag once, search anywhere."/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="2. Categorization"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFC107"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#CCCCCC"
+                android:lineSpacingMultiplier="1.5"
+                android:layout_marginBottom="24dp"
+                android:text="Albums you create in your native gallery appear in KeyTag automatically. No setup, no import.\n\nShortList is a proxy folder for your native gallery Favorites. Keep using the heart/favorite button in your gallery as you always have — something catches your eye, favorite it. Then move those favorites into ShortList. KeyTag picks it up automatically at the top of the album grid. No decisions required at this stage. Keyword, star and categorize later — or not at all. It is the most frictionless first-pass sorting available.\n\nFrom ShortList you can batch select and keyword tag, then move images to their final album in the native gallery when you are ready."/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="3. Starring"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFC107"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#CCCCCC"
+                android:lineSpacingMultiplier="1.5"
+                android:layout_marginBottom="24dp"
+                android:text="Star images 1–3 from the viewer or in batch via the TAG dialog. Search by star rating across your entire library. Useful for filtering your best shots without browsing album by album."/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Videos"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
@@ -75,12 +126,13 @@
                 android:textColor="#CCCCCC"
                 android:lineSpacingMultiplier="1.5"
                 android:layout_marginBottom="24dp"
-                android:text="1. Organise photos into albums using your native gallery app.\n\n2. Open KeyTag to browse those same albums.\n\n3. Select images and tap TAG to assign keywords and star ratings.\n\n4. Use Search to find images by keyword or star rating across all albums.\n\n5. Share images from your gallery directly to KeyTag to tag them on the spot."/>
+                android:text="KeyTag includes a dedicated Videos-fin folder for curated video clips. Create a folder called Videos-fin in your Pictures directory and move your final edited videos there using your native gallery or a file manager. KeyTag displays them in their own grid with thumbnails, duration labels and filenames. Tap to play in your native video player. Long press to keyword tag and star rate. Tagged videos appear alongside images in keyword and star search results."/>
+
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ShortList"
+                android:text="Search"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
@@ -92,24 +144,7 @@
                 android:textColor="#CCCCCC"
                 android:lineSpacingMultiplier="1.5"
                 android:layout_marginBottom="24dp"
-                android:text="ShortList is a special folder in your Pictures directory. Move images there from your native gallery as a first-pass selection. Open ShortList in KeyTag to tag and rate them, then move them to their final album."/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Star Ratings"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:layout_marginBottom="8dp"/>
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#CCCCCC"
-                android:lineSpacingMultiplier="1.5"
-                android:layout_marginBottom="24dp"
-                android:text="Tap the stars in the top bar while viewing an image to rate it 1–3 stars. Use the TAG dialog to batch-rate selected images. Search by star rating from the main screen."/>
+                android:text="Global keyword and star search covers your entire library across all albums in one query. Accessible from the main screen and from within any album."/>
 
             <TextView
                 android:layout_width="match_parent"
@@ -126,7 +161,7 @@
                 android:textColor="#CCCCCC"
                 android:lineSpacingMultiplier="1.5"
                 android:layout_marginBottom="24dp"
-                android:text="Swipe left or tap the EXIF button while viewing an image to see camera metadata — date, device, lens specs, image dimensions and assigned keywords."/>
+                android:text="Swipe left while viewing an image to see camera metadata — date, device, lens specs, image dimensions and assigned keywords."/>
 
             <TextView
                 android:layout_width="match_parent"
@@ -143,7 +178,7 @@
                 android:textColor="#CCCCCC"
                 android:lineSpacingMultiplier="1.5"
                 android:layout_marginBottom="8dp"
-                android:text="KeyTag is a free, open source hobby project. Contributions and feedback welcome."/>
+                android:text="KeyTag is a free, open source project. Contributions and feedback welcome.\n\ngithub.com/PIXEL-PEN/KeyTag"/>
 
         </LinearLayout>
     </ScrollView>

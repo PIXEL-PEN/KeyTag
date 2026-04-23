@@ -78,6 +78,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
+
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
@@ -103,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
             showSortDialog();
             return true;
         }
+
         if (id == R.id.action_search) {
             showGlobalSearchDialog();
             return true;
@@ -113,13 +116,16 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-
+        if (id == R.id.action_refresh) {
+            loadAlbums();
+            android.widget.Toast.makeText(
+                    this, "Albums refreshed",
+                    android.widget.Toast.LENGTH_SHORT
+            ).show();
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
-
-
-
-
     }
 
     @Override
@@ -130,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
             loadAlbums();
         }
     }
-
     private void loadAlbums() {
 
         // Create ShortList folder if it doesn't exist

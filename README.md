@@ -167,6 +167,12 @@ The EXIF panel does not yet display video-specific metadata (codec, framerate, r
 ### Category / Pending Moves
 The TAG dialog Category field stores an intended album assignment as a reminder. KeyTag does not move files — the actual move must be done in the native gallery.
 
+### Album Renames
+Renaming an album in the native gallery may not reflect in KeyTag on some devices,
+particularly Xiaomi/MIUI. This is a MediaStore limitation — the bucket display name
+is not reliably updated by the OS after a folder rename. Workaround: move all images
+out of the folder, delete it, recreate it with the new name, and move images back in.
+
 ---
 
 ## Roadmap
