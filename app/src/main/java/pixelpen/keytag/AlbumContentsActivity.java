@@ -359,7 +359,23 @@ public class AlbumContentsActivity extends AppCompatActivity {
         images.clear();
         for (String uriString : uriStrings) {
             Uri uri = Uri.parse(uriString);
+
+            // Resolve exotic URIs to stable MediaStore URIs
+            if (uri.getAuthority() != null && !uri.getAuthority().equals("media")) {
+                long mediaId = pixelpen.keytag.util.MediaStoreUtil.getMediaStoreId(
+                        getApplicationContext(), uri);
+                if (mediaId != -1) {
+                    // Try images first
+                    Uri resolved = android.content.ContentUris.withAppendedId(
+                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                            mediaId);
+                    uri = resolved;
+                    uriString = resolved.toString();
+                }
+            }
+
             ImageItem item = new ImageItem(0, uri);
+
             // Detect video by URI path
             String uriLower = uriString.toLowerCase();
             if (uriString.contains(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())
@@ -369,6 +385,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
                     || uriLower.endsWith(".mkv")) {
                 item.isVideo = true;
             }
+
             images.add(item);
         }
     }
