@@ -1,16 +1,28 @@
+
+
 # KeyTag
 
-**Batch keyword tagging for Android photos — the feature every gallery app is missing.**
+**Batch keyword tagging for Android — this does not exist anywhere else.**
 
-Share any selection of images from your native gallery directly to KeyTag. Assign keywords, star ratings and category in one step. Keywords are written as industry-standard XMP sidecar files alongside your images — tag once, search anywhere, on any device, in any application.
+Every desktop DAM has it. Lightroom has it. Capture One has it. No Android gallery app has it. KeyTag fills that gap.
+
+Select any number of images in your native gallery. Tap Share → KeyTag. Type a keyword. Tap Apply. Every selected image is tagged instantly — one action, any number of photos.
+
+Keywords are stored locally for instant search and written as industry-standard XMP sidecar files alongside your images. Move a photo to your desktop, open it in Lightroom or any XMP-aware application — the keywords are already there. Tag on your phone, find anywhere.
+
+---
+
+## Who is it for?
+
+Anyone who shoots more photos than they can find later. Photographers who use a mobile workflow. Anyone frustrated by the impossibility of searching their phone library for anything more specific than a date or album name. If you have ever scrolled through hundreds of images looking for "that shot of the market in Bangkok" — KeyTag is for you.
 
 ---
 
 ## Overview
 
-Every major Android gallery app lets you organise photos into albums. None of them let you keyword tag a batch of images. This is a glaring omission — keywords are the foundation of any serious photo workflow. Without them, finding a specific image months later means scrolling through hundreds of thumbnails hoping to recognise it.
+KeyTag is not a gallery app. It does not replace the gallery app you already use. It sits alongside it as a metadata layer — reading the same albums, leaving your files untouched, adding the one capability every gallery app omits: the ability to describe your images in words and find them again.
 
-KeyTag solves this. It adds a metadata layer on top of whatever gallery app you already use, without replacing it. It is free and open source.
+It is free, open source, and fully offline. No accounts, no cloud, no tracking.
 
 ---
 
@@ -26,9 +38,9 @@ Keywords are stored locally in KeyTag's database for instant search. They are al
 
 ### 2. Categorization — albums as workflow
 
-KeyTag reads all your native gallery albums automatically. No setup, no import. Albums you create in your native gallery appear in KeyTag instantly. The TAG dialog includes a Category field — assign an intended destination album at tagging time as a reminder for the native gallery move.
+KeyTag reads all your native gallery albums automatically. No setup, no import. Albums you create in your native gallery appear in KeyTag instantly.
 
-**ShortList** is a special folder KeyTag creates in your Pictures directory. Use it as a quick first-pass inbox — move images there from your native gallery Favorites or any other source, then open ShortList in KeyTag to keyword and categorise them in batch before moving them to their final album.
+ShortList is a special folder KeyTag creates in your Pictures directory. Use it as a quick first-pass inbox — move images there from your native gallery Favorites or any other source, then open ShortList in KeyTag to keyword and categorise them in batch before moving them to their final album.
 
 ### 3. Starring — quality rating
 
@@ -61,7 +73,6 @@ Star images 1–3 from the viewer or in batch via the TAG dialog. Search by star
 - Select multiple images then tap TAG
 - Assign star rating (0-3) to all selected images
 - Add keyword with autocomplete from existing keywords
-- Assign a category from existing Pictures albums
 - Keywords written as XMP sidecar files alongside originals — portable to any platform
 
 ### Search
@@ -82,6 +93,12 @@ Star images 1–3 from the viewer or in batch via the TAG dialog. Search by star
 - Keywords written to XMP sidecar files — searchable on any device, any platform
 - Works on Vivo, Xiaomi, and standard Android devices
 - Resolves manufacturer-specific URI formats to stable MediaStore IDs
+
+---
+
+## Privacy
+
+KeyTag is fully offline. No accounts, no cloud sync, no analytics, no tracking of any kind. All metadata is stored locally on your device. Nothing leaves your device unless you explicitly share or export a file yourself.
 
 ---
 
@@ -108,7 +125,7 @@ id              long (primary key)
 name            text
 usageCount      int
 
-image_keywords      (cross-reference table)
+image_keywords
 imageId         long
 keywordId       long
 
@@ -164,14 +181,8 @@ ShortList and Videos-fin are currently hardcoded. A future release will make the
 ### Video Metadata
 The EXIF panel does not yet display video-specific metadata (codec, framerate, resolution). Planned for a future release.
 
-### Category / Pending Moves
-The TAG dialog Category field stores an intended album assignment as a reminder. KeyTag does not move files — the actual move must be done in the native gallery.
-
 ### Album Renames
-Renaming an album in the native gallery may not reflect in KeyTag on some devices,
-particularly Xiaomi/MIUI. This is a MediaStore limitation — the bucket display name
-is not reliably updated by the OS after a folder rename. Workaround: move all images
-out of the folder, delete it, recreate it with the new name, and move images back in.
+Renaming an album in the native gallery may not reflect in KeyTag on some devices, particularly Xiaomi/MIUI. This is a MediaStore limitation — the bucket display name is not reliably updated by the OS after a folder rename. Workaround: move all images out of the folder, delete it, recreate it with the new name, and move images back in.
 
 ---
 
@@ -180,8 +191,7 @@ out of the folder, delete it, recreate it with the new name, and move images bac
 - Configurable folder names in Settings
 - Video metadata panel
 - Pending moves view with auto-clear when MediaStore detects file moved
-- Remove debug logs before production release
-- Play Store release preparation
+- Play Store / IzzyOnDroid release preparation
 - UI polish pass
 
 ---
