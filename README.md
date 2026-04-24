@@ -204,11 +204,18 @@ Open an issue before submitting a pull request. This is a focused tool — new f
 
 ## License
 
-MIT License
+GNU General Public License v3.0
+
+KeyTag is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+
+This means anyone can use, study, share and improve this software — but any distributed modifications must remain open source under the same license. Commercial exploitation without releasing source code is not permitted.
+
+Full license: https://www.gnu.org/licenses/gpl-3.0.html
 
 ---
 
 ## Author
 
+TST (PIXEL-PEN)
 Developed with Claude (Anthropic) as an AI-assisted Android project.
 Repository: https://github.com/PIXEL-PEN/KeyTag
