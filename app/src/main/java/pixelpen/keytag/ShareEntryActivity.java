@@ -60,19 +60,13 @@ public class ShareEntryActivity extends AppCompatActivity {
     }
 
     private String resolveToMediaStoreUri(Uri uri) {
-        Log.d("KEYTAG_URI", "=== resolveToMediaStoreUri ===");
-        Log.d("KEYTAG_URI", "Input URI: " + uri.toString());
-        Log.d("KEYTAG_URI", "Authority: " + uri.getAuthority());
-        Log.d("KEYTAG_URI", "LastPathSegment: " + uri.getLastPathSegment());
 
         try {
             if ("media".equals(uri.getAuthority())) {
-                Log.d("KEYTAG_URI", "Result: already MediaStore URI, returning as-is");
                 return uri.toString();
             }
 
             String name = uri.getLastPathSegment();
-            Log.d("KEYTAG_URI", "Querying DISPLAY_NAME = " + name);
 
             if (name != null) {
                 Cursor cursor = getContentResolver().query(
@@ -85,31 +79,25 @@ public class ShareEntryActivity extends AppCompatActivity {
 
                 if (cursor != null) {
                     try {
-                        Log.d("KEYTAG_URI", "Cursor count: " + cursor.getCount());
                         if (cursor.moveToFirst()) {
                             long id = cursor.getLong(0);
                             Uri mediaUri = Uri.withAppendedPath(
                                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                                     String.valueOf(id)
                             );
-                            Log.d("KEYTAG_URI", "Result: resolved to " + mediaUri);
                             return mediaUri.toString();
                         } else {
-                            Log.d("KEYTAG_URI", "Result: cursor empty, falling back to raw URI");
                         }
                     } finally {
                         cursor.close();
                     }
                 } else {
-                    Log.d("KEYTAG_URI", "Result: cursor null, falling back to raw URI");
                 }
             }
 
         } catch (Exception e) {
-            Log.d("KEYTAG_URI", "Exception: " + e.getMessage());
         }
 
-        Log.d("KEYTAG_URI", "Fallback URI returned: " + uri.toString());
         return uri.toString();
     }
 }

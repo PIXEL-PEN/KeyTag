@@ -44,7 +44,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
     private final int MIN_SPAN = 2;
     private final int MAX_SPAN = 6;
 
-
     private boolean shareMode = false;
 
     @Override
@@ -54,9 +53,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
         ArrayList<String> searchUris =
                 getIntent().getStringArrayListExtra("search_results");
 
-        shareMode =
-                getIntent().getBooleanExtra("share_mode", false);
-        android.util.Log.d("SHARE_DEBUG", "shareMode = " + shareMode);
+        shareMode = getIntent().getBooleanExtra("share_mode", false);
 
         getWindow().setDecorFitsSystemWindows(true);
         setContentView(R.layout.activity_album_contents);
@@ -117,12 +114,11 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 toolbar.setNavigationIcon(null);
             }
 
-        });  // ← closes ImageAdapter callback
+        });
 
         recyclerView.setAdapter(adapter);
         recyclerView.setHasFixedSize(true);
 
-        // Share mode auto-launch dialog AFTER adapter ready
         if (shareMode && searchUris != null && !searchUris.isEmpty()) {
             recyclerView.post(() -> {
                 adapter.selectAll();
@@ -130,16 +126,12 @@ public class AlbumContentsActivity extends AppCompatActivity {
             });
         }
 
-        // Grid pinch zoom
         ScaleGestureDetector scaleDetector =
                 new ScaleGestureDetector(this,
                         new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-
                             @Override
                             public boolean onScale(ScaleGestureDetector detector) {
-
                                 float scaleFactor = detector.getScaleFactor();
-
                                 if (scaleFactor > 1.05f) {
                                     if (spanCount > MIN_SPAN) {
                                         spanCount--;
@@ -151,7 +143,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
                                         layoutManager.setSpanCount(spanCount);
                                     }
                                 }
-
                                 return true;
                             }
                         });
@@ -173,24 +164,16 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         String selection = MediaStore.Images.Media.BUCKET_ID + "=?";
         String[] selectionArgs = { String.valueOf(bucketId) };
-
         String sortOrder = MediaStore.Images.Media.DATE_TAKEN + " DESC";
 
         Cursor cursor = getContentResolver().query(
-                collection,
-                projection,
-                selection,
-                selectionArgs,
-                sortOrder
-        );
+                collection, projection, selection, selectionArgs, sortOrder);
 
         if (cursor != null) {
-
             int idColumn   = cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID);
             int dateColumn = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
 
             while (cursor.moveToNext()) {
-
                 long id        = cursor.getLong(idColumn);
                 long dateTaken = cursor.getLong(dateColumn);
 
@@ -207,63 +190,75 @@ public class AlbumContentsActivity extends AppCompatActivity {
         }
     }
 
+    private void loadSearchResults(ArrayList<String> uriStrings) {
+        images.clear();
+        for (String uriString : uriStrings) {
+            Uri uri = Uri.parse(uriString);
+
+            if (uri.getAuthority() != null && !uri.getAuthority().equals("media")) {
+                long mediaId = MediaStoreUtil.getMediaStoreId(getApplicationContext(), uri);
+                if (mediaId != -1) {
+                    Uri resolved = android.content.ContentUris.withAppendedId(
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, mediaId);
+                    uri = resolved;
+                    uriString = resolved.toString();
+                }
+            }
+
+            ImageItem item = new ImageItem(0, uri);
+            String uriLower = uriString.toLowerCase();
+            if (uriString.contains(MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())
+                    || uriLower.endsWith(".mp4")
+                    || uriLower.endsWith(".mov")
+                    || uriLower.endsWith(".avi")
+                    || uriLower.endsWith(".mkv")) {
+                item.isVideo = true;
+            }
+            images.add(item);
+        }
+    }
+
     private void showBatchTagDialog() {
 
         android.view.View dialogView =
                 getLayoutInflater().inflate(R.layout.dialog_batch_tag, null);
 
-        AutoCompleteTextView tagInput =
-                dialogView.findViewById(R.id.tagInput);
+        AutoCompleteTextView tagInput = dialogView.findViewById(R.id.tagInput);
 
-        // Rating state
         final int[] rating = {0};
 
-        // Setup dialog stars
         android.view.View ratingRow = dialogView.findViewById(R.id.ratingRow);
-
         ratingRow.setOnClickListener(v -> {
             rating[0] = (rating[0] + 1) % 4;
             updateDialogStars(dialogView, rating[0]);
         });
 
-        // Load autocomplete keywords
         new Thread(() -> {
-
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
-
             List<String> keywords = dao.getAllKeywordNames();
 
             runOnUiThread(() -> {
                 ArrayAdapter<String> adapter =
-                        new ArrayAdapter<>(
-                                this,
-                                android.R.layout.simple_dropdown_item_1line,
-                                keywords
-                        );
+                        new ArrayAdapter<>(this,
+                                android.R.layout.simple_dropdown_item_1line, keywords);
                 tagInput.setAdapter(adapter);
             });
-
         }).start();
+
         new MaterialAlertDialogBuilder(this)
                 .setView(dialogView)
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Apply", (dialog, which) -> {
-
                     String keyword = tagInput.getText().toString().trim();
-
-                    android.util.Log.d("STAR_DEBUG", "Apply pressed — keyword=" + keyword + " rating=" + rating[0]);
-
                     applyMetadataToSelected(keyword, rating[0]);
-
                 })
                 .show();
     }
+
     private void applyMetadataToSelected(String keyword, int rating) {
 
-        final String normalized = keyword == null
-                ? ""
-                : keyword.trim().toLowerCase();
+        final String normalized = keyword == null ? "" : keyword.trim().toLowerCase();
 
         new Thread(() -> {
 
@@ -273,9 +268,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
             KeywordEntity keywordEntity = null;
 
             if (!normalized.isEmpty()) {
-
                 keywordEntity = dao.getKeywordByName(normalized);
-
                 if (keywordEntity == null) {
                     dao.insertKeyword(new KeywordEntity(normalized, 0));
                     keywordEntity = dao.getKeywordByName(normalized);
@@ -289,24 +282,18 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 String uriString = item.uri.toString();
 
                 long mediaId = MediaStoreUtil.getMediaStoreId(
-                        getApplicationContext(),
-                        Uri.parse(uriString)
-                );
+                        getApplicationContext(), Uri.parse(uriString));
 
                 ImageEntity image = null;
 
                 if (mediaId != -1) {
                     image = dao.getImageByMediaStoreId(mediaId);
                 }
-
                 if (image == null) {
                     image = dao.getImageByUri(uriString);
                 }
-
                 if (image == null) {
-
                     dao.insertImage(new ImageEntity(uriString, System.currentTimeMillis()));
-
                     if (mediaId != -1) {
                         dao.updateMediaStoreId(uriString, mediaId);
                         image = dao.getImageByMediaStoreId(mediaId);
@@ -316,29 +303,18 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 }
                 if (image == null) continue;
 
-                // Apply rating
                 if (mediaId != -1) {
-                    if (mediaId != -1) {
-                        dao.updateQualityByMediaStoreId(mediaId, rating);
-
-                        android.util.Log.d("STAR_DEBUG",
-                                "WRITE uri=" + uriString +
-                                        " mediaId=" + mediaId +
-                                        " rating=" + rating);
-
-                    } else {
-                        dao.updateQuality(uriString, rating);
-                    }
+                    dao.updateQualityByMediaStoreId(mediaId, rating);
                 } else {
                     dao.updateQuality(uriString, rating);
                 }
-                // Apply keyword (if provided)
+
                 if (keywordEntity != null) {
                     dao.insertCrossRef(
-                            new ImageKeywordCrossRef(image.id, keywordEntity.id)
-                    );
+                            new ImageKeywordCrossRef(image.id, keywordEntity.id));
                 }
-            }
+
+            } // end for loop
 
             if (keywordEntity != null) {
                 dao.incrementUsage(keywordEntity.id);
@@ -347,48 +323,14 @@ public class AlbumContentsActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 adapter.clearSelection();
                 android.widget.Toast.makeText(
-                        this,
-                        "Metadata applied",
+                        this, "Metadata applied",
                         android.widget.Toast.LENGTH_SHORT
                 ).show();
             });
 
         }).start();
     }
-    private void loadSearchResults(ArrayList<String> uriStrings) {
-        images.clear();
-        for (String uriString : uriStrings) {
-            Uri uri = Uri.parse(uriString);
 
-            // Resolve exotic URIs to stable MediaStore URIs
-            if (uri.getAuthority() != null && !uri.getAuthority().equals("media")) {
-                long mediaId = pixelpen.keytag.util.MediaStoreUtil.getMediaStoreId(
-                        getApplicationContext(), uri);
-                if (mediaId != -1) {
-                    // Try images first
-                    Uri resolved = android.content.ContentUris.withAppendedId(
-                            android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                            mediaId);
-                    uri = resolved;
-                    uriString = resolved.toString();
-                }
-            }
-
-            ImageItem item = new ImageItem(0, uri);
-
-            // Detect video by URI path
-            String uriLower = uriString.toLowerCase();
-            if (uriString.contains(android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI.toString())
-                    || uriLower.endsWith(".mp4")
-                    || uriLower.endsWith(".mov")
-                    || uriLower.endsWith(".avi")
-                    || uriLower.endsWith(".mkv")) {
-                item.isVideo = true;
-            }
-
-            images.add(item);
-        }
-    }
     private void updateDialogStars(android.view.View dialogView, int level) {
 
         ImageView star1 = dialogView.findViewById(R.id.dialogStar1);
@@ -397,28 +339,23 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         int filled = R.drawable.baseline_star_24;
         int empty  = R.drawable.baseline_star_border_24;
-
-        int gold = android.graphics.Color.parseColor("#FFC107");
-        int white = android.graphics.Color.WHITE;
+        int gold   = android.graphics.Color.parseColor("#FFC107");
+        int white  = android.graphics.Color.WHITE;
 
         star1.setImageResource(level >= 1 ? filled : empty);
         star1.setColorFilter(level >= 1 ? gold : white);
-
         star2.setImageResource(level >= 2 ? filled : empty);
         star2.setColorFilter(level >= 2 ? gold : white);
-
         star3.setImageResource(level >= 3 ? filled : empty);
         star3.setColorFilter(level >= 3 ? gold : white);
     }
 
-
     private void writeXmpSidecar(android.content.Context context, Uri imageUri, String keyword) {
         try {
-            // Resolve file path from MediaStore
             String filePath = null;
             android.database.Cursor cursor = context.getContentResolver().query(
                     imageUri,
-                    new String[]{ android.provider.MediaStore.Images.Media.DATA },
+                    new String[]{ MediaStore.Images.Media.DATA },
                     null, null, null
             );
             if (cursor != null) {
@@ -430,17 +367,13 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
             if (filePath == null) return;
 
-            // Derive sidecar path: same name, .xmp extension
             String xmpPath = filePath.replaceAll("\\.[^.]+$", ".xmp");
             java.io.File xmpFile = new java.io.File(xmpPath);
 
-            // Read existing keywords if sidecar already exists
             List<String> existingKeywords = new ArrayList<>();
             if (xmpFile.exists()) {
                 String existing = new String(
-                        java.nio.file.Files.readAllBytes(xmpFile.toPath())
-                );
-                // Extract existing rdf:li entries
+                        java.nio.file.Files.readAllBytes(xmpFile.toPath()));
                 java.util.regex.Matcher m = java.util.regex.Pattern
                         .compile("<rdf:li>(.+?)</rdf:li>")
                         .matcher(existing);
@@ -449,12 +382,10 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 }
             }
 
-            // Add new keyword if not already present
             if (!existingKeywords.contains(keyword)) {
                 existingKeywords.add(keyword);
             }
 
-            // Build XMP content
             StringBuilder items = new StringBuilder();
             for (String kw : existingKeywords) {
                 items.append("        <rdf:li>").append(kw).append("</rdf:li>\n");
@@ -476,44 +407,35 @@ public class AlbumContentsActivity extends AppCompatActivity {
                             "</x:xmpmeta>\n" +
                             "<?xpacket end='w'?>";
 
-            // Write sidecar
             java.io.FileWriter writer = new java.io.FileWriter(xmpFile, false);
             writer.write(xmp);
             writer.close();
 
-            android.util.Log.d("XMP_DEBUG", "XMP written: " + xmpPath + " keywords=" + existingKeywords);
-
-        } catch (Exception e) {
-            android.util.Log.d("XMP_DEBUG", "XMP write failed: " + e.getMessage());
-        }
+        } catch (Exception ignored) {}
     }
 
     private void insertDateHeaders() {
 
         java.util.List<ImageItem> withHeaders = new java.util.ArrayList<>();
-
         String lastLabel = null;
-
         java.text.SimpleDateFormat sdf =
                 new java.text.SimpleDateFormat("MMMM  yyyy", java.util.Locale.getDefault());
 
         for (ImageItem item : images) {
-
             String label = item.dateTaken > 0
                     ? sdf.format(new java.util.Date(item.dateTaken))
                     : "Unknown Date";
-
             if (!label.equals(lastLabel)) {
                 withHeaders.add(ImageItem.asHeader(label));
                 lastLabel = label;
             }
-
             withHeaders.add(item);
         }
 
         images.clear();
         images.addAll(withHeaders);
     }
+
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_album_contents, menu);
@@ -557,36 +479,26 @@ public class AlbumContentsActivity extends AppCompatActivity {
         android.view.View dialogView =
                 getLayoutInflater().inflate(R.layout.dialog_global_search, null);
 
-        AutoCompleteTextView searchInput =
-                dialogView.findViewById(R.id.searchInput);
+        AutoCompleteTextView searchInput = dialogView.findViewById(R.id.searchInput);
 
         new Thread(() -> {
-
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
-
             java.util.List<String> keywords = dao.getAllKeywordNames();
 
             runOnUiThread(() -> {
-
                 ArrayAdapter<String> kwAdapter =
-                        new ArrayAdapter<>(
-                                this,
-                                android.R.layout.simple_dropdown_item_1line,
-                                keywords
-                        );
-
+                        new ArrayAdapter<>(this,
+                                android.R.layout.simple_dropdown_item_1line, keywords);
                 searchInput.setAdapter(kwAdapter);
 
                 TextView star1 = dialogView.findViewById(R.id.star1);
                 TextView star2 = dialogView.findViewById(R.id.star2);
                 TextView star3 = dialogView.findViewById(R.id.star3);
-
                 star1.setOnClickListener(v -> searchByStars(1));
                 star2.setOnClickListener(v -> searchByStars(2));
                 star3.setOnClickListener(v -> searchByStars(3));
             });
-
         }).start();
 
         new MaterialAlertDialogBuilder(this)
@@ -606,57 +518,41 @@ public class AlbumContentsActivity extends AppCompatActivity {
     private void performGlobalSearch(String keyword) {
 
         new Thread(() -> {
-
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
-
             java.util.List<String> uris = dao.getImageUrisForKeyword(keyword);
 
             runOnUiThread(() -> {
-
                 if (uris.isEmpty()) {
                     android.widget.Toast.makeText(
-                            this,
-                            "No results found",
+                            this, "No results found",
                             android.widget.Toast.LENGTH_SHORT
                     ).show();
                     return;
                 }
-
                 Intent intent = new Intent(this, AlbumContentsActivity.class);
                 intent.putStringArrayListExtra(
-                        "search_results",
-                        new ArrayList<>(uris)
-                );
+                        "search_results", new ArrayList<>(uris));
                 intent.putExtra("bucket_name", "Search Results");
                 startActivity(intent);
             });
-
         }).start();
     }
 
     private void searchByStars(int level) {
 
         new Thread(() -> {
-
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
-
             List<String> results = dao.getUrisByStarLevel(level);
 
             runOnUiThread(() -> {
-
                 Intent intent = new Intent(this, AlbumContentsActivity.class);
                 intent.putStringArrayListExtra(
-                        "search_results",
-                        new ArrayList<>(results)
-                );
+                        "search_results", new ArrayList<>(results));
                 intent.putExtra("bucket_name", "Search Results");
                 startActivity(intent);
             });
-
         }).start();
     }
-
 }
-

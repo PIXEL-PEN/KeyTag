@@ -594,7 +594,6 @@ public class ImageViewerActivity extends AppCompatActivity {
                 dao.updateQuality(uri, newLevel);
             }
 
-            Log.d("KEYTAG", "STAR WRITE URI = " + uri);
 
             int finalLevel = newLevel;
 
@@ -630,7 +629,6 @@ public class ImageViewerActivity extends AppCompatActivity {
 
     private void loadQualityForImage(String uri) {
 
-        android.util.Log.d("KEYTAG", "Viewer lookup URI = " + uri);
 
         new Thread(() -> {
 
@@ -642,7 +640,6 @@ public class ImageViewerActivity extends AppCompatActivity {
                     android.net.Uri.parse(uri)
             );
 
-            android.util.Log.d("STAR_DEBUG", "Viewer READ uri=" + uri + " mediaId=" + mediaId);
 
             Integer level = null;
 
