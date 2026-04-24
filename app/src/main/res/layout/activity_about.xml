@@ -171,15 +171,32 @@
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:layout_marginBottom="8dp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Privacy"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="8dp"/>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#CCCCCC"
                 android:lineSpacingMultiplier="1.5"
-                android:layout_marginBottom="8dp"
-                android:text="KeyTag is a free, open source project. Contributions and feedback welcome.\n\ngithub.com/PIXEL-PEN/KeyTag"/>
+                android:layout_marginBottom="24dp"
+                android:text="KeyTag is fully offline. No accounts, no cloud sync, no analytics, no tracking of any kind. All metadata is stored locally on your device in a private database. Nothing leaves your device unless you explicitly share or export a file yourself."/>
 
+
+            <TextView
+                android:id="@+id/feedbackLink"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#64B5F6"
+                android:lineSpacingMultiplier="1.5"
+                android:layout_marginBottom="8dp"
+                android:text="KeyTag is a free, open source project. Contributions and feedback welcome.&#10;&#10;Feedback and discussions:&#10;github.com/PIXEL-PEN/KeyTag/discussions&#10;&#10;Source code:&#10;github.com/PIXEL-PEN/KeyTag"/>
         </LinearLayout>
     </ScrollView>
 
