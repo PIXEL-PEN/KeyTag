@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1C2B3A"
+    android:padding="32dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Welcome to KeyTag"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#FFC107"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="The one thing your gallery app can't do."
+        android:textSize="16sp"
+        android:textColor="#CCCCCC"
+        android:layout_marginBottom="40dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Select photos in your gallery. Tap Share → KeyTag. Type a keyword. Tap Apply."
+        android:textSize="15sp"
+        android:textColor="#FFFFFF"
+        android:lineSpacingMultiplier="1.5"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Keywords are stored locally and written to your image files — searchable on any device, on your desktop, in any application."        android:textSize="14sp"
+        android:textColor="#CCCCCC"
+        android:lineSpacingMultiplier="1.5"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Your native gallery albums appear automatically. All folders under DCIM and Pictures are shown — including some you may not recognise. Long press any album to hide it from KeyTag. Hidden folders stay hidden and can be restored from the menu at any time."
+        android:textSize="14sp"
+        android:textColor="#CCCCCC"
+        android:lineSpacingMultiplier="1.5"
+        android:layout_marginBottom="48dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGetStarted"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Get Started"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:backgroundTint="#FFC107"
+        android:textColor="#1C2B3A"/>
+
+</LinearLayout>
