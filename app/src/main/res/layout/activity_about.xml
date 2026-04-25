@@ -196,8 +196,7 @@
                 android:textColor="#64B5F6"
                 android:lineSpacingMultiplier="1.5"
                 android:layout_marginBottom="8dp"
-                android:text="KeyTag is a free, open source project. Contributions and feedback welcome.&#10;&#10;Feedback and discussions:&#10;github.com/PIXEL-PEN/KeyTag/discussions&#10;&#10;Source code:&#10;github.com/PIXEL-PEN/KeyTag"/>
-        </LinearLayout>
+                android:text="KeyTag is a free, open source project. Contributions and feedback welcome.&#10;&#10;Copyright 2026  TST (PIXEL-PEN)&#10;Licensed under GPL v3&#10;&#10;Feedback and discussions:&#10;github.com/PIXEL-PEN/KeyTag/discussions&#10;&#10;Source code:&#10;github.com/PIXEL-PEN/KeyTag"/>        </LinearLayout>
     </ScrollView>
 
 </LinearLayout>

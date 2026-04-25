@@ -24,6 +24,10 @@ KeyTag is not a gallery app. It does not replace the gallery app you already use
 
 It is free, open source, and fully offline. No accounts, no cloud, no tracking.
 
+KeyTag works with any Android gallery app. For the best experience we recommend Fossify Gallery — a free, open source gallery with excellent album management, folder organisation and a clean interface. Together they cover the full photo workflow: Fossify handles browsing and organisation, KeyTag handles metadata.
+
+Fossify Gallery: https://github.com/FossifyOrg/Gallery
+
 ---
 
 ## Core Workflow
@@ -184,6 +188,9 @@ The EXIF panel does not yet display video-specific metadata (codec, framerate, r
 ### Album Renames
 Renaming an album in the native gallery may not reflect in KeyTag on some devices, particularly Xiaomi/MIUI. This is a MediaStore limitation — the bucket display name is not reliably updated by the OS after a folder rename. Workaround: move all images out of the folder, delete it, recreate it with the new name, and move images back in.
 
+### Screenshots and Edited Images
+Screenshots contain no camera EXIF data — no Date Taken, no lens information. The EXIF panel will show filename and dimensions only. If you use screenshots as a cropping shortcut, the original EXIF data from the source image is lost. Assigning keywords in KeyTag before discarding the original is the best mitigation.
+
 ---
 
 ## Roadmap
@@ -216,6 +223,8 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.html
 
 ## Author
 
-TST (PIXEL-PEN)
+Copyright 2026  TST (PIXEL-PEN)
+Licensed under GNU General Public License v3.0
+
 Developed with Claude (Anthropic) as an AI-assisted Android project.
 Repository: https://github.com/PIXEL-PEN/KeyTag

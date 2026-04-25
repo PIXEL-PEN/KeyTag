@@ -490,24 +490,28 @@ public class ImageViewerActivity extends AppCompatActivity {
                 String aperture = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER);
                 String focal    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH);
                 String date     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
-
                 int imgWidth = 0, imgHeight = 0;
+                String displayName = null;
+                long dateModified = 0;
                 try {
                     android.database.Cursor cursor = getContentResolver().query(
                             uri,
                             new String[]{
                                     android.provider.MediaStore.Images.Media.WIDTH,
-                                    android.provider.MediaStore.Images.Media.HEIGHT
+                                    android.provider.MediaStore.Images.Media.HEIGHT,
+                                    android.provider.MediaStore.Images.Media.DISPLAY_NAME,
+                                    android.provider.MediaStore.Images.Media.DATE_MODIFIED
                             }, null, null, null);
                     if (cursor != null) {
                         if (cursor.moveToFirst()) {
-                            imgWidth  = cursor.getInt(0);
-                            imgHeight = cursor.getInt(1);
+                            imgWidth     = cursor.getInt(0);
+                            imgHeight    = cursor.getInt(1);
+                            displayName  = cursor.getString(2);
+                            dateModified = cursor.getLong(3) * 1000L; // seconds to ms
                         }
                         cursor.close();
                     }
                 } catch (Exception ignored) {}
-
                 List<String> keywordNames = new ArrayList<>();
                 try {
                     AppDatabase db = AppDatabase.getInstance(getApplicationContext());
@@ -532,9 +536,11 @@ public class ImageViewerActivity extends AppCompatActivity {
 
                 StringBuilder sb = new StringBuilder();
 
-                if (date != null)
-                    sb.append(formatExifDate(date)).append("\n");
+                if (displayName != null)
+                    sb.append(displayName).append("\n\n");
 
+                if (date != null)
+                    sb.append("Date Taken:  ").append(formatExifDate(date)).append("\n");
                 if (make != null || model != null) {
                     sb.append("\n");
                     sb.append(make != null ? make : "")
@@ -562,6 +568,13 @@ public class ImageViewerActivity extends AppCompatActivity {
                             .append("  •  ").append(mp).append(" MP\n");
                 }
 
+                if (dateModified > 0) {
+                    java.text.SimpleDateFormat sdf =
+                            new java.text.SimpleDateFormat("MMM. dd  yyyy     HH:mm:ss",
+                                    java.util.Locale.getDefault());
+                    sb.append("\nModified:  ")                            .append(sdf.format(new java.util.Date(dateModified)))
+                            .append("\n");
+                }
                 if (!keywordNames.isEmpty()) {
                     sb.append("\n")
                             .append(android.text.TextUtils.join("  ·  ", keywordNames))
@@ -736,8 +749,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
             String time = parts.length > 1 ? parts[1] : "";
 
-            return year + "  " + monthName + " " + day + "     " + time;
-
+            return monthName + " " + day + "  " + year + "     " + time;
         } catch (Exception e) {
             return exifDate;
         }
