@@ -300,8 +300,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
             });
         }).start();
 
-        new MaterialAlertDialogBuilder(this)
-                .setView(dialogView)
+        new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_KeyTag_Dialog)                .setView(dialogView)
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Apply", (dialog, which) -> {
                     String keyword = tagInput.getText().toString().trim();

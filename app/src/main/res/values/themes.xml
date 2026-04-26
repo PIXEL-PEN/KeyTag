@@ -5,4 +5,20 @@
         <item name="android:colorBackground">@color/kt_background</item>
     </style>
 
+    <style name="ThemeOverlay_KeyTag_Dialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="colorSurface">#1C2B3A</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorPrimary">#FFC107</item>
+        <item name="colorAccent">#FFC107</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorHint">#88FFFFFF</item>
+        <item name="autoCompleteTextViewStyle">@style/KeyTag_AutoComplete</item>
+    </style>
+
+    <style name="KeyTag_AutoComplete" parent="Widget.AppCompat.AutoCompleteTextView">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorHint">#88FFFFFF</item>
+        <item name="android:popupBackground">#3D5166</item>    </style>
+
+
 </resources>
