@@ -295,7 +295,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 ArrayAdapter<String> adapter =
                         new ArrayAdapter<>(this,
-                                android.R.layout.simple_dropdown_item_1line, keywords);
+                                R.layout.item_dropdown, keywords);
                 tagInput.setAdapter(adapter);
             });
         }).start();

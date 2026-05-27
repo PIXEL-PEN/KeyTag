@@ -41,7 +41,11 @@
         android:id="@+id/tagInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Add keyword"/>
-
+        android:hint="Add keyword"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#88FFFFFF"
+        android:popupBackground="#3D5166"
+        android:dropDownWidth="match_parent"
+        android:layout_marginBottom="16dp"/>
 
 </LinearLayout>
