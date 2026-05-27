@@ -6,8 +6,13 @@
         android:id="@+id/action_search"
         android:title="Search"
         android:icon="@android:drawable/ic_menu_search"
-        android:showAsAction="ifRoom|collapseActionView"
-        android:actionViewClass="androidx.appcompat.widget.SearchView"/>
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/action_toggle_view"
+        android:title="List View"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        app:showAsAction="ifRoom"/>
 
     <item
         android:id="@+id/action_sort"
@@ -24,11 +29,5 @@
     <item
         android:id="@+id/action_about"
         android:title="About" />
-
-    <item
-        android:id="@+id/action_refresh"
-        android:title="Refresh"
-        android:icon="@android:drawable/ic_menu_rotate"
-        app:showAsAction="ifRoom"/>
 
 </menu>

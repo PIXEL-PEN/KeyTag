@@ -83,6 +83,9 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private static final int REQUEST_FOLDER_PICK = 200;
+
+    private boolean isListView = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -170,17 +173,24 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        if (id == R.id.action_refresh) {
+
+
+        if (id == R.id.action_toggle_view) {
+            isListView = !isListView;
+            item.setTitle(isListView ? "Grid View" : "List View");
+            recyclerView.setLayoutManager(isListView
+                    ? new androidx.recyclerview.widget.LinearLayoutManager(this)
+                    : new GridLayoutManager(this, 4));
             loadAlbums();
-            android.widget.Toast.makeText(
-                    this, "Albums refreshed",
-                    android.widget.Toast.LENGTH_SHORT
-            ).show();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+
+
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
@@ -356,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
                 AlbumItem videos = new AlbumItem(-2, "Videos-fin", null, videoCount);
                 sortedList.add(finalShortListItem != null ? 1 : 0, videos);
 
-                recyclerView.setAdapter(new AlbumAdapter(sortedList));
+                recyclerView.setAdapter(new AlbumAdapter(sortedList, isListView));
                 recyclerView.addItemDecoration(
                         new GridDividerDecoration(4, 0x66FFFFFF, dpToPx(1))
                 );

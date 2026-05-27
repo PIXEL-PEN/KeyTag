@@ -16,42 +16,6 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-/*
- * KeyTag — Batch keyword tagging for Android
- * Copyright (C) 2026 TST (PIXEL-PEN)
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
- */
-
-/*
- * KeyTag — Batch keyword tagging for Android
- * Copyright (C) 2026 PIXEL-PEN
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <https://www.gnu.org/licenses/>.
- */
-
 package pixelpen.keytag;
 
 import android.view.LayoutInflater;
@@ -64,22 +28,24 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 
-
 import java.util.List;
 
 public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
 
     private final List<AlbumItem> albums;
+    private final boolean isListView;
 
-    public AlbumAdapter(List<AlbumItem> albums) {
+    public AlbumAdapter(List<AlbumItem> albums, boolean isListView) {
         this.albums = albums;
+        this.isListView = isListView;
     }
 
     @NonNull
     @Override
     public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        int layout = isListView ? R.layout.item_album_list : R.layout.item_album;
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_album, parent, false);
+                .inflate(layout, parent, false);
         return new VH(view);
     }
 
@@ -105,7 +71,6 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
             );
             holder.shortlistBadge.setVisibility(View.VISIBLE);
         } else if (album.bucketId == -2) {
-            // Videos-fin tile
             holder.textName.setTextColor(android.graphics.Color.parseColor("#64B5F6"));
             holder.imageFolder.setImageResource(android.R.drawable.ic_media_play);
             holder.imageFolder.setColorFilter(
@@ -139,9 +104,8 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
             }
         });
 
-        // Long-press to hide album
         holder.itemView.setOnLongClickListener(v -> {
-            if (isShortList) return true; // ShortList cannot be hidden
+            if (isShortList) return true;
             new com.google.android.material.dialog.MaterialAlertDialogBuilder(v.getContext())
                     .setTitle("Hide album?")
                     .setMessage("\"" + album.bucketName + "\" will be hidden from KeyTag.")
@@ -163,13 +127,15 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
             return true;
         });
 
-        // Make tile square
-        holder.itemView.post(() -> {
-            int width = holder.itemView.getWidth();
-            holder.itemView.getLayoutParams().height = width;
-            holder.itemView.requestLayout();
-        });
+        if (!isListView) {
+            holder.itemView.post(() -> {
+                int width = holder.itemView.getWidth();
+                holder.itemView.getLayoutParams().height = width;
+                holder.itemView.requestLayout();
+            });
+        }
     }
+
     @Override
     public int getItemCount() {
         return albums.size();
@@ -184,10 +150,10 @@ public class AlbumAdapter extends RecyclerView.Adapter<AlbumAdapter.VH> {
 
         VH(View itemView) {
             super(itemView);
-            imageFolder = itemView.findViewById(R.id.imageFolder);
+            imageFolder   = itemView.findViewById(R.id.imageFolder);
             shortlistBadge = itemView.findViewById(R.id.shortlistBadge);
-            textName = itemView.findViewById(R.id.textAlbumName);
-            textCount = itemView.findViewById(R.id.textCount);
+            textName      = itemView.findViewById(R.id.textAlbumName);
+            textCount     = itemView.findViewById(R.id.textCount);
         }
     }
 }

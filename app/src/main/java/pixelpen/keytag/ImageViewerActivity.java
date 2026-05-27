@@ -564,6 +564,7 @@ public class ImageViewerActivity extends AppCompatActivity {
                 if (finalWidth > 0 && finalHeight > 0) {
                     long mp = Math.round((finalWidth * (long) finalHeight) / 1_000_000.0);
                     sb.append("\n")
+                            .append("Dimensions:  ")
                             .append(finalWidth).append(" × ").append(finalHeight)
                             .append("  •  ").append(mp).append(" MP\n");
                 }

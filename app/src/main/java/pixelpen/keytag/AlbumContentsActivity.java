@@ -130,7 +130,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
         });
         recyclerView.setLayoutManager(layoutManager);
 
-        int spacing = (int) (5 * getResources().getDisplayMetrics().density);
+        int spacing = (int) (3 * getResources().getDisplayMetrics().density);
         recyclerView.addItemDecoration(
                 new GridSpacingDecoration(spanCount, spacing)
         );
