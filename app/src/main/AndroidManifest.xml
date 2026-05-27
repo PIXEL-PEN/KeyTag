@@ -36,11 +36,14 @@
             android:name=".AlbumContentsActivity"
             android:exported="false" />
 
-        <activity android:name=".ImageViewerActivity"/>
 
         <activity android:name=".VideoContentsActivity" />
 
         <activity android:name=".AboutActivity" />
+
+        <activity
+            android:name=".ImageViewerActivity"
+            android:configChanges="orientation|screenSize|screenLayout"/>
 
 
         <activity

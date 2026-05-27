@@ -754,7 +754,27 @@ public class ImageViewerActivity extends AppCompatActivity {
             return exifDate;
         }
     }
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            WindowInsetsControllerCompat controller =
+                    new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
+            controller.hide(android.view.WindowInsets.Type.systemBars());
+            controller.setSystemBarsBehavior(
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            );
+        }
+    }
 
-
-
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        View topBar = findViewById(R.id.topOverlayBar);
+        if (newConfig.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            topBar.setVisibility(View.GONE);
+        } else {
+            topBar.setVisibility(View.VISIBLE);
+        }
+    }
 }
