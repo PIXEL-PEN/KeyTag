@@ -171,7 +171,6 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         WindowInsetsControllerCompat controller =
                 new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView());
-
         controller.hide(android.view.WindowInsets.Type.systemBars());
         controller.setSystemBarsBehavior(
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
@@ -182,7 +181,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         keywordInput = findViewById(R.id.keywordInput);
         saveKeyword = findViewById(R.id.saveKeyword);
         keywordChipGroup = findViewById(R.id.keywordChipGroup);
-
+        keywordChipGroup.setVisibility(View.GONE);
         exifPanel = findViewById(R.id.exifPanel);
 
         exifPanel.post(() -> {
@@ -292,7 +291,6 @@ public class ImageViewerActivity extends AppCompatActivity {
             }
         });
     }
-
     public void toggleSystemUi() {
 
         WindowInsetsControllerCompat controller =
@@ -300,13 +298,14 @@ public class ImageViewerActivity extends AppCompatActivity {
 
         if (isSystemUiVisible) {
             controller.hide(android.view.WindowInsets.Type.systemBars());
+            keywordChipGroup.setVisibility(View.GONE);
         } else {
             controller.show(android.view.WindowInsets.Type.systemBars());
+            keywordChipGroup.setVisibility(View.VISIBLE);
         }
 
         isSystemUiVisible = !isSystemUiVisible;
     }
-
     public void showKeywordPanel() {
         keywordPanel.setVisibility(View.VISIBLE);
         keywordInput.requestFocus();
@@ -577,7 +576,7 @@ public class ImageViewerActivity extends AppCompatActivity {
                             .append("\n");
                 }
                 if (!keywordNames.isEmpty()) {
-                    sb.append("\n")
+                    sb.append("\nKeywords:  ")
                             .append(android.text.TextUtils.join("  ·  ", keywordNames))
                             .append("\n");
                 }
