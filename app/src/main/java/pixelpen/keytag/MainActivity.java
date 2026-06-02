@@ -401,11 +401,15 @@ public class MainActivity extends AppCompatActivity {
                 ArrayAdapter<String> adapter =
                         new ArrayAdapter<>(
                                 this,
-                                android.R.layout.simple_dropdown_item_1line,
+                                R.layout.item_dropdown,
                                 keywords
                         );
 
                 searchInput.setAdapter(adapter);
+
+                searchInput.setAdapter(adapter);
+                int screenHeight = getResources().getDisplayMetrics().heightPixels;
+                searchInput.setDropDownHeight(screenHeight / 5);
 
                 TextView star1 = dialogView.findViewById(R.id.star1);
                 TextView star2 = dialogView.findViewById(R.id.star2);

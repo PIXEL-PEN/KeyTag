@@ -297,16 +297,29 @@ public class AlbumContentsActivity extends AppCompatActivity {
                         new ArrayAdapter<>(this,
                                 R.layout.item_dropdown, keywords);
                 tagInput.setAdapter(adapter);
+                int screenHeight = getResources().getDisplayMetrics().heightPixels;
+                tagInput.setDropDownHeight(screenHeight / 5);
             });
         }).start();
 
-        new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_KeyTag_Dialog)                .setView(dialogView)
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Apply", (dialog, which) -> {
-                    String keyword = tagInput.getText().toString().trim();
-                    applyMetadataToSelected(keyword, rating[0]);
-                })
-                .show();
+        androidx.appcompat.app.AlertDialog d =
+                new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_KeyTag_Dialog)
+                        .setView(dialogView)
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Apply", (dialog, which) -> {
+                            String keyword = tagInput.getText().toString().trim();
+                            applyMetadataToSelected(keyword, rating[0]);
+                        })
+                        .create();
+
+        d.show();
+
+        d.getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE |
+                        android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        d.getWindow().setLayout(
+                android.view.WindowManager.LayoutParams.MATCH_PARENT,
+                android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
 
     private void applyMetadataToSelected(String keyword, int rating) {
@@ -542,9 +555,10 @@ public class AlbumContentsActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 ArrayAdapter<String> kwAdapter =
                         new ArrayAdapter<>(this,
-                                android.R.layout.simple_dropdown_item_1line, keywords);
+                                R.layout.item_dropdown, keywords);
                 searchInput.setAdapter(kwAdapter);
-
+                int screenHeight = getResources().getDisplayMetrics().heightPixels;
+                searchInput.setDropDownHeight(screenHeight / 5);
                 TextView star1 = dialogView.findViewById(R.id.star1);
                 TextView star2 = dialogView.findViewById(R.id.star2);
                 TextView star3 = dialogView.findViewById(R.id.star3);

@@ -278,10 +278,12 @@ public class VideoContentsActivity extends AppCompatActivity {
                 android.widget.ArrayAdapter<String> kwAdapter =
                         new android.widget.ArrayAdapter<>(
                                 this,
-                                android.R.layout.simple_dropdown_item_1line,
+                                R.layout.item_dropdown,
                                 keywords
                         );
                 searchInput.setAdapter(kwAdapter);
+                int screenHeight = getResources().getDisplayMetrics().heightPixels;
+                searchInput.setDropDownHeight(screenHeight / 5);
 
                 android.widget.TextView star1 = dialogView.findViewById(R.id.star1);
                 android.widget.TextView star2 = dialogView.findViewById(R.id.star2);
