@@ -11,8 +11,7 @@
     <item
         android:id="@+id/action_tag_all"
         android:title="Tag All"
-        android:icon="@android:drawable/ic_menu_add"
-        app:showAsAction="always"/>
+        app:showAsAction="never"/>
 
     <item
         android:id="@+id/action_open_gallery"

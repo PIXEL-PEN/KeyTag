@@ -45,6 +45,7 @@
             android:name=".ImageViewerActivity"
             android:configChanges="orientation|screenSize|screenLayout"/>
 
+        <activity android:name=".KeywordManagerActivity" />
 
         <activity
             android:name=".ShareEntryActivity"

@@ -13,19 +13,12 @@
         android:layout_height="54dp"
         android:background="#34495E"
         android:titleTextColor="@android:color/white"
-        android:paddingStart="16dp"
-        android:gravity="center_vertical"
-        android:paddingEnd="12dp"
-        app:titleTextAppearance="@style/ToolbarTitle"
-        app:titleMarginEnd="120dp"/>
+        app:titleTextAppearance="@style/ToolbarTitle"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingLeft="9dp"
-        android:paddingRight="9dp"
-        android:clipToPadding="false" />
+        android:layout_weight="1"/>
 
 </LinearLayout>

@@ -270,6 +270,11 @@ public class AlbumContentsActivity extends AppCompatActivity {
             }
             images.add(item);
         }
+
+        MaterialToolbar toolbar = findViewById(R.id.topBar);
+        if (toolbar != null) {
+            toolbar.setTitle("Results  (" + images.size() + ")");
+        }
     }
 
     private void showBatchTagDialog() {
@@ -505,6 +510,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_album_contents, menu);
+        boolean isSearchResults = getIntent().getStringArrayListExtra("search_results") != null;
+        menu.findItem(R.id.action_tag_all).setVisible(!isSearchResults);
         return true;
     }
 

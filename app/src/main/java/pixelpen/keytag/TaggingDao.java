@@ -155,4 +155,20 @@ public interface TaggingDao {
     @Query("UPDATE images SET qualityLevel = :level WHERE mediaStoreId = :mediaStoreId")
     void updateQualityByMediaStoreId(long mediaStoreId, int level);
 
+    // Rename keyword
+    @Query("UPDATE keywords SET name = :newName WHERE id = :keywordId")
+    void renameKeyword(long keywordId, String newName);
+
+    // Delete all cross refs for a keyword
+    @Query("DELETE FROM image_keywords WHERE keywordId = :keywordId")
+    void deleteAllCrossRefsForKeyword(long keywordId);
+
+    // Get all keywords with usage count
+    @Query("SELECT * FROM keywords ORDER BY usageCount DESC")
+    List<KeywordEntity> getAllKeywords();
+
+    @Query("SELECT COUNT(*) FROM image_keywords WHERE keywordId = :keywordId")
+    int getImageCountForKeyword(long keywordId);
+
+
 }

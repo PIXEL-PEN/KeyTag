@@ -173,7 +173,10 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-
+        if (id == R.id.action_keywords) {
+            startActivity(new Intent(this, KeywordManagerActivity.class));
+            return true;
+        }
 
         if (id == R.id.action_toggle_view) {
             isListView = !isListView;
