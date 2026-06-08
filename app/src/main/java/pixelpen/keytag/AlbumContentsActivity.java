@@ -273,7 +273,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.topBar);
         if (toolbar != null) {
-            toolbar.setTitle("Results  (" + images.size() + ")");
+            toolbar.setTitle("Results (" + images.size() + ")");
         }
     }
 
