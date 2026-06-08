@@ -518,6 +518,10 @@ public class AlbumContentsActivity extends AppCompatActivity {
             showGlobalSearchDialog();
             return true;
         }
+        if (item.getItemId() == R.id.action_tag_all) {
+            showTagAllDialog();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -622,4 +626,54 @@ public class AlbumContentsActivity extends AppCompatActivity {
             });
         }).start();
     }
+
+    private void showTagAllDialog() {
+        String suggestedKeyword = bucketName != null
+                ? bucketName.trim().toLowerCase() : "";
+
+        android.view.View dialogView =
+                getLayoutInflater().inflate(R.layout.dialog_batch_tag, null);
+
+        AutoCompleteTextView tagInput = dialogView.findViewById(R.id.tagInput);
+        tagInput.setText(suggestedKeyword);
+
+        final int[] rating = {0};
+        android.view.View ratingRow = dialogView.findViewById(R.id.ratingRow);
+        ratingRow.setOnClickListener(v -> {
+            rating[0] = (rating[0] + 1) % 4;
+            updateDialogStars(dialogView, rating[0]);
+        });
+
+        new Thread(() -> {
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+            List<String> keywords = dao.getAllKeywordNames();
+            runOnUiThread(() -> {
+                ArrayAdapter<String> adapter =
+                        new ArrayAdapter<>(this, R.layout.item_dropdown, keywords);
+                tagInput.setAdapter(adapter);
+            });
+        }).start();
+
+        new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_KeyTag_Dialog)
+                .setTitle("Tag all images in this album")
+                .setMessage("Keyword will be applied to all " + images.size() + " images.")
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    String keyword = tagInput.getText().toString().trim();
+                    if (!keyword.isEmpty()) {
+                        selectAllAndTag(keyword, rating[0]);
+                    }
+                })
+                .show();
+    }
+
+    private void selectAllAndTag(String keyword, int rating) {
+        for (ImageItem item : images) {
+            if (!item.isHeader) item.isSelected = true;
+        }
+        applyMetadataToSelected(keyword, rating);
+    }
+
 }
