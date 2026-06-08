@@ -14,8 +14,13 @@ Keywords are stored locally for instant search and written as industry-standard 
 
 ## Who is it for?
 
-Anyone who shoots more photos than they can find later. Photographers who use a mobile workflow. Anyone frustrated by the impossibility of searching their phone library for anything more specific than a date or album name. If you have ever scrolled through hundreds of images looking for "that shot of the market in Bangkok" — KeyTag is for you.
+Anyone who shoots more photos than they can find later. Photographers who use a mobile workflow. Anyone who has ever been mid-conversation, reached for their phone to show someone a specific image, and spent the next five minutes scrolling through thousands of photos while the moment passed.
 
+That scenario is nearly universal. The solution is keywords — and until now, no Android gallery app has offered them.
+
+KeyTag is for anyone frustrated by the impossibility of searching their phone library for anything more specific than a date or album name. If you have ever scrolled through hundreds of images looking for "that shot of the floating market vendor in Bangkok" — KeyTag is for you.
+
+Folders help you browse. Keywords help you find. Both have their place — and KeyTag handles both, working alongside whatever gallery app you already use.
 ---
 
 ## Overview
@@ -200,6 +205,10 @@ Screenshots contain no camera EXIF data — no Date Taken, no lens information. 
 - Pending moves view with auto-clear when MediaStore detects file moved
 - Play Store / IzzyOnDroid release preparation
 - UI polish pass
+- Auto-tag all images in an album with the album name (one-tap backlog coverage)
+- Language translations (Thai first)
+
+
 
 ---
 
