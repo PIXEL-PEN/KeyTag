@@ -535,9 +535,6 @@ public class ImageViewerActivity extends AppCompatActivity {
                     }
                 }
 
-                android.util.Log.d("GPS_DEBUG", "latLon=" + (latLon != null ? latLon[0] + "," + latLon[1] : "null"));
-                android.util.Log.d("GPS_DEBUG", "raw lat=" + exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE));
-                android.util.Log.d("GPS_DEBUG", "alt=" + exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE));
 
 
                 // MediaStore query
@@ -657,11 +654,13 @@ public class ImageViewerActivity extends AppCompatActivity {
                             .append("\n");
                 }
 
+
+
                 if (altStr != null) {
                     try {
                         double alt = evalRational(altStr);
                         if ("1".equals(altRef)) alt = -alt;
-                        if (alt != 0) {
+                        if (alt > 0) {
                             sb.append("\nAltitude:\n")
                                     .append(String.format(java.util.Locale.getDefault(),
                                             "%.1f m", alt))
@@ -669,6 +668,7 @@ public class ImageViewerActivity extends AppCompatActivity {
                         }
                     } catch (Exception ignored) {}
                 }
+
                 if (filePath != null) {
                     java.io.File f = new java.io.File(filePath);
                     sb.append("\nPath:\n")
