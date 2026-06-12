@@ -86,6 +86,8 @@ import android.graphics.Color;
 
 import android.widget.LinearLayout;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import android.content.ContentUris;
 import android.net.Uri;
 
@@ -130,13 +132,7 @@ public class ImageViewerActivity extends AppCompatActivity {
             if (position < 0 || position >= imageList.size()) return;
 
             Uri currentUri = Uri.parse(imageList.get(position));
-
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("image/*");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, currentUri);
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            startActivity(Intent.createChooser(shareIntent, "Share Image"));
+            showShareDialog(currentUri);
         });
 
         ImageView btnOpen = findViewById(R.id.btnOpen);
@@ -928,6 +924,124 @@ public class ImageViewerActivity extends AppCompatActivity {
             return 0;
         }
     }
+
+    private void showShareDialog(Uri imageUri) {
+
+        android.view.View dialogView = getLayoutInflater()
+                .inflate(R.layout.dialog_share_options, null);
+
+        android.widget.CheckBox stripAll =
+                dialogView.findViewById(R.id.checkStripAll);
+
+        new MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_KeyTag_Dialog)
+                .setTitle("Share image")
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Share", (dialog, which) -> {
+                    if (stripAll.isChecked()) {
+                        shareWithStrippedExif(imageUri, true);
+                    } else {
+                        shareDirectly(imageUri);
+                    }
+                })
+                .show();
+    }
+    private void shareDirectly(Uri imageUri) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/*");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(shareIntent, "Share Image"));
+    }
+
+    private void shareWithStrippedExif(Uri imageUri, boolean stripAll) {
+        new Thread(() -> {
+            try {
+                // Get file path
+                String filePath = null;
+                android.database.Cursor cursor = getContentResolver().query(
+                        imageUri,
+                        new String[]{ android.provider.MediaStore.Images.Media.DATA,
+                                android.provider.MediaStore.Images.Media.DISPLAY_NAME },
+                        null, null, null);
+                String displayName = "image.jpg";
+                if (cursor != null && cursor.moveToFirst()) {
+                    filePath = cursor.getString(0);
+                    displayName = cursor.getString(1);
+                    cursor.close();
+                }
+
+                // Copy to cache
+                java.io.File cacheDir = new java.io.File(getCacheDir(), "share");
+                cacheDir.mkdirs();
+                java.io.File tempFile = new java.io.File(cacheDir, displayName);
+
+                // Copy original to temp
+                java.io.InputStream in = getContentResolver().openInputStream(imageUri);
+                java.io.FileOutputStream out = new java.io.FileOutputStream(tempFile);
+                byte[] buf = new byte[8192];
+                int len;
+                while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+                in.close();
+                out.close();
+
+                // Strip EXIF from temp file
+                androidx.exifinterface.media.ExifInterface exif =
+                        new androidx.exifinterface.media.ExifInterface(tempFile.getAbsolutePath());
+
+                if (stripAll) {
+                    // Strip all tags
+                    String[] allTags = {
+                            androidx.exifinterface.media.ExifInterface.TAG_MAKE,
+                            androidx.exifinterface.media.ExifInterface.TAG_MODEL,
+                            androidx.exifinterface.media.ExifInterface.TAG_DATETIME,
+                            androidx.exifinterface.media.ExifInterface.TAG_ISO_SPEED_RATINGS,
+                            androidx.exifinterface.media.ExifInterface.TAG_EXPOSURE_TIME,
+                            androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER,
+                            androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH,
+                            androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE,
+                            androidx.exifinterface.media.ExifInterface.TAG_GPS_LONGITUDE,
+                            androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE,
+                            androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE_REF,
+                            androidx.exifinterface.media.ExifInterface.TAG_GPS_LONGITUDE_REF,
+                            androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE_REF
+                    };
+                    for (String tag : allTags) {
+                        exif.setAttribute(tag, null);
+                    }
+                } else {
+                    // Strip location only
+                    exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE, null);
+                    exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LONGITUDE, null);
+                    exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE, null);
+                    exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE_REF, null);
+                    exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LONGITUDE_REF, null);
+                    exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE_REF, null);
+                }
+                exif.saveAttributes();
+
+                // Share temp file via FileProvider
+                Uri shareUri = androidx.core.content.FileProvider.getUriForFile(
+                        this,
+                        getPackageName() + ".fileprovider",
+                        tempFile);
+
+                runOnUiThread(() -> {
+                    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                    shareIntent.setType("image/*");
+                    shareIntent.putExtra(Intent.EXTRA_STREAM, shareUri);
+                    shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(Intent.createChooser(shareIntent, "Share Image"));
+                });
+
+            } catch (Exception e) {
+                runOnUiThread(() -> android.widget.Toast.makeText(
+                        this, "Share failed: " + e.getMessage(),
+                        android.widget.Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
 
 
     @Override
