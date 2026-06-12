@@ -109,11 +109,14 @@ public class MainActivity extends AppCompatActivity {
                     == android.content.pm.PackageManager.PERMISSION_GRANTED;
             boolean hasVideo = checkSelfPermission(android.Manifest.permission.READ_MEDIA_VIDEO)
                     == android.content.pm.PackageManager.PERMISSION_GRANTED;
-            if (!hasImages || !hasVideo) {
+            boolean hasLocation = checkSelfPermission(android.Manifest.permission.ACCESS_MEDIA_LOCATION)
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+            if (!hasImages || !hasVideo || !hasLocation) {
                 requestPermissions(
                         new String[]{
                                 android.Manifest.permission.READ_MEDIA_IMAGES,
-                                android.Manifest.permission.READ_MEDIA_VIDEO
+                                android.Manifest.permission.READ_MEDIA_VIDEO,
+                                android.Manifest.permission.ACCESS_MEDIA_LOCATION
                         },
                         100
                 );

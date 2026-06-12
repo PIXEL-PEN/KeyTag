@@ -451,7 +451,7 @@ public class ImageViewerActivity extends AppCompatActivity {
         int panelWidth = exifPanel.getWidth();
 
         if (panelWidth == 0) {
-            panelWidth = (int) (280 * getResources().getDisplayMetrics().density);
+            panelWidth = (int) (320 * getResources().getDisplayMetrics().density);
         }
 
         if (isExifVisible) {
@@ -473,14 +473,41 @@ public class ImageViewerActivity extends AppCompatActivity {
             isExifVisible = true;
         }
     }
-
     private void loadExif(String uriString) {
         new Thread(() -> {
             try {
                 android.net.Uri uri = android.net.Uri.parse(uriString);
-                androidx.exifinterface.media.ExifInterface exif =
-                        new androidx.exifinterface.media.ExifInterface(
-                                getContentResolver().openInputStream(uri));
+
+// Request unredacted location data
+                android.net.Uri originalUri = uri;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    originalUri = android.provider.MediaStore.setRequireOriginal(uri);
+                }
+
+                androidx.exifinterface.media.ExifInterface exif;
+                try {
+                    exif = new androidx.exifinterface.media.ExifInterface(
+                            getContentResolver().openInputStream(originalUri));
+                } catch (Exception e) {
+                    // Fallback to regular uri if setRequireOriginal fails
+                    exif = new androidx.exifinterface.media.ExifInterface(
+                            getContentResolver().openInputStream(uri));
+                }
+
+
+                android.database.Cursor pathCursor = getContentResolver().query(
+                        uri,
+                        new String[]{ android.provider.MediaStore.Images.Media.DATA },
+                        null, null, null);
+                if (pathCursor != null && pathCursor.moveToFirst()) {
+                    String path = pathCursor.getString(0);
+                    pathCursor.close();
+                    exif = new androidx.exifinterface.media.ExifInterface(path);
+                } else {
+                    if (pathCursor != null) pathCursor.close();
+                    exif = new androidx.exifinterface.media.ExifInterface(
+                            getContentResolver().openInputStream(uri));
+                }
 
                 String make     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MAKE);
                 String model    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_MODEL);
@@ -489,9 +516,37 @@ public class ImageViewerActivity extends AppCompatActivity {
                 String aperture = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_F_NUMBER);
                 String focal    = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_FOCAL_LENGTH);
                 String date     = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME);
+
+                // GPS — try built-in first
+                double[] latLon = exif.getLatLong();
+                if (latLon == null) {
+                    String latStr = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE);
+                    String latRef = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE_REF);
+                    String lonStr = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LONGITUDE);
+                    String lonRef = exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LONGITUDE_REF);
+                    if (latStr != null && lonStr != null) {
+                        double lat = parseGpsRational(latStr);
+                        double lon = parseGpsRational(lonStr);
+                        if (latRef != null && latRef.equals("S")) lat = -lat;
+                        if (lonRef != null && lonRef.equals("W")) lon = -lon;
+                        if (lat != 0 || lon != 0) {
+                            latLon = new double[]{lat, lon};
+                        }
+                    }
+                }
+
+                android.util.Log.d("GPS_DEBUG", "latLon=" + (latLon != null ? latLon[0] + "," + latLon[1] : "null"));
+                android.util.Log.d("GPS_DEBUG", "raw lat=" + exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_LATITUDE));
+                android.util.Log.d("GPS_DEBUG", "alt=" + exif.getAttribute(androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE));
+
+
+                // MediaStore query
                 int imgWidth = 0, imgHeight = 0;
                 String displayName = null;
                 long dateModified = 0;
+                long fileSize = 0;
+                String filePath = null;
+
                 try {
                     android.database.Cursor cursor = getContentResolver().query(
                             uri,
@@ -499,18 +554,24 @@ public class ImageViewerActivity extends AppCompatActivity {
                                     android.provider.MediaStore.Images.Media.WIDTH,
                                     android.provider.MediaStore.Images.Media.HEIGHT,
                                     android.provider.MediaStore.Images.Media.DISPLAY_NAME,
-                                    android.provider.MediaStore.Images.Media.DATE_MODIFIED
+                                    android.provider.MediaStore.Images.Media.DATE_MODIFIED,
+                                    android.provider.MediaStore.Images.Media.SIZE,
+                                    android.provider.MediaStore.Images.Media.DATA
                             }, null, null, null);
                     if (cursor != null) {
                         if (cursor.moveToFirst()) {
                             imgWidth     = cursor.getInt(0);
                             imgHeight    = cursor.getInt(1);
                             displayName  = cursor.getString(2);
-                            dateModified = cursor.getLong(3) * 1000L; // seconds to ms
+                            dateModified = cursor.getLong(3) * 1000L;
+                            fileSize     = cursor.getLong(4);
+                            filePath     = cursor.getString(5);
                         }
                         cursor.close();
                     }
                 } catch (Exception ignored) {}
+
+                // Keywords
                 List<String> keywordNames = new ArrayList<>();
                 try {
                     AppDatabase db = AppDatabase.getInstance(getApplicationContext());
@@ -533,6 +594,7 @@ public class ImageViewerActivity extends AppCompatActivity {
                     }
                 } catch (Exception ignored) {}
 
+                // Build display string
                 StringBuilder sb = new StringBuilder();
 
                 if (displayName != null)
@@ -540,6 +602,7 @@ public class ImageViewerActivity extends AppCompatActivity {
 
                 if (date != null)
                     sb.append("Date Taken:  ").append(formatExifDate(date)).append("\n");
+
                 if (make != null || model != null) {
                     sb.append("\n");
                     sb.append(make != null ? make : "")
@@ -560,20 +623,57 @@ public class ImageViewerActivity extends AppCompatActivity {
 
                 int finalWidth = imgWidth;
                 int finalHeight = imgHeight;
+
                 if (finalWidth > 0 && finalHeight > 0) {
-                    long mp = Math.round((finalWidth * (long) finalHeight) / 1_000_000.0);
-                    sb.append("\n")
-                            .append("Dimensions:  ")
+                    double mp = (finalWidth * (long) finalHeight) / 1_000_000.0;
+                    sb.append("\nResolution:\n")
                             .append(finalWidth).append(" × ").append(finalHeight)
-                            .append("  •  ").append(mp).append(" MP\n");
+                            .append("  (").append(String.format("%.1f", mp)).append(" MP)\n");
+                }
+
+                if (fileSize > 0) {
+                    sb.append("\nSize:\n").append(formatFileSize(fileSize)).append("\n");
                 }
 
                 if (dateModified > 0) {
-                    java.text.SimpleDateFormat sdf =
-                            new java.text.SimpleDateFormat("MMM. dd  yyyy     HH:mm:ss",
-                                    java.util.Locale.getDefault());
-                    sb.append("\nModified:  ")                            .append(sdf.format(new java.util.Date(dateModified)))
+                    java.text.SimpleDateFormat dateSdf =
+                            new java.text.SimpleDateFormat("MMM. dd yyyy", java.util.Locale.getDefault());
+                    java.text.SimpleDateFormat timeSdf =
+                            new java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault());
+                    java.util.Date modDate = new java.util.Date(dateModified);
+                    sb.append("\nModified:\n")
+                            .append(dateSdf.format(modDate)).append("\n")
+                            .append(timeSdf.format(modDate)).append("\n");
+                }
+                String altStr = exif.getAttribute(
+                        androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE);
+                String altRef = exif.getAttribute(
+                        androidx.exifinterface.media.ExifInterface.TAG_GPS_ALTITUDE_REF);
+
+                if (latLon != null) {
+                    sb.append("\nGPS Coordinates:\n")
+                            .append(String.format(java.util.Locale.getDefault(),
+                                    "%.5f°,  %.5f°", latLon[0], latLon[1]))
                             .append("\n");
+                }
+
+                if (altStr != null) {
+                    try {
+                        double alt = evalRational(altStr);
+                        if ("1".equals(altRef)) alt = -alt;
+                        if (alt != 0) {
+                            sb.append("\nAltitude:\n")
+                                    .append(String.format(java.util.Locale.getDefault(),
+                                            "%.1f m", alt))
+                                    .append("\n");
+                        }
+                    } catch (Exception ignored) {}
+                }
+                if (filePath != null) {
+                    java.io.File f = new java.io.File(filePath);
+                    sb.append("\nPath:\n")
+                            .append(f.getParent()).append("/\n")
+                            .append(f.getName()).append("\n");
                 }
                 if (!keywordNames.isEmpty()) {
                     sb.append("\nKeywords:  ")
@@ -582,14 +682,38 @@ public class ImageViewerActivity extends AppCompatActivity {
                 }
 
                 String result = sb.toString();
-                runOnUiThread(() -> exifText.setText(result));
+                final double[] finalLatLon = latLon;
+
+                runOnUiThread(() -> {
+                    exifText.setText(result);
+                    if (finalLatLon != null) {
+                        exifText.setOnClickListener(v -> {
+                            String mapsUri = String.format(java.util.Locale.getDefault(),
+                                    "geo:%.5f,%.5f?q=%.5f,%.5f",
+                                    finalLatLon[0], finalLatLon[1],
+                                    finalLatLon[0], finalLatLon[1]);
+                            android.content.Intent intent = new android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse(mapsUri));
+                            try {
+                                startActivity(intent);
+                            } catch (Exception ignored) {}
+                        });
+                    } else {
+                        exifText.setOnClickListener(null);
+                    }
+                });
 
             } catch (Exception e) {
                 runOnUiThread(() -> exifText.setText("No EXIF data available"));
             }
         }).start();
     }
-
+    private String formatFileSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        else if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        else return String.format("%.1f MB", bytes / (1024.0 * 1024));
+    }
     // Format exposure as fraction e.g. 0.004 → 1/250 sec
     private String formatExposure(String exposure) {
         try {
@@ -747,9 +871,20 @@ public class ImageViewerActivity extends AppCompatActivity {
             String monthName = (month >= 1 && month <= 12)
                     ? monthNames[month - 1] : String.valueOf(month);
 
-            String time = parts.length > 1 ? parts[1] : "";
+            String timeFormatted = "";
+            if (parts.length > 1) {
+                try {
+                    java.text.SimpleDateFormat input =
+                            new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault());
+                    java.text.SimpleDateFormat output =
+                            new java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault());
+                    timeFormatted = output.format(input.parse(parts[1]));
+                } catch (Exception ignored) {
+                    timeFormatted = parts[1];
+                }
+            }
 
-            return monthName + " " + day + "  " + year + "     " + time;
+            return monthName + " " + day + "  " + year + "     " + timeFormatted;
         } catch (Exception e) {
             return exifDate;
         }
@@ -766,6 +901,34 @@ public class ImageViewerActivity extends AppCompatActivity {
             );
         }
     }
+
+    private double parseGpsRational(String raw) {
+        try {
+            String[] parts = raw.split(",");
+            double deg = 0, min = 0, sec = 0;
+            if (parts.length > 0) deg = evalRational(parts[0].trim());
+            if (parts.length > 1) min = evalRational(parts[1].trim());
+            if (parts.length > 2) sec = evalRational(parts[2].trim());
+            return deg + min / 60.0 + sec / 3600.0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    private double evalRational(String rational) {
+        try {
+            if (rational.contains("/")) {
+                String[] parts = rational.split("/");
+                double num = Double.parseDouble(parts[0].trim());
+                double den = Double.parseDouble(parts[1].trim());
+                return den != 0 ? num / den : 0;
+            }
+            return Double.parseDouble(rational);
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
 
     @Override
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {

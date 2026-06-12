@@ -103,14 +103,13 @@
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/exifPanel"
-            android:layout_width="280dp"
+            android:layout_width="320dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
             android:visibility="visible"
-            android:translationX="280dp"
+            android:translationX="320dp"
             android:backgroundTint="#99353535"
             app:cardElevation="8dp">
-
             <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
