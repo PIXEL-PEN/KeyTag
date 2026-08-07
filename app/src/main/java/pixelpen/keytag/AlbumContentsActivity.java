@@ -344,6 +344,9 @@ public class AlbumContentsActivity extends AppCompatActivity {
                     dao.insertKeyword(new KeywordEntity(normalized, 0));
                     keywordEntity = dao.getKeywordByName(normalized);
                 }
+
+
+
             }
 
             for (ImageItem item : images) {
@@ -383,6 +386,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 if (keywordEntity != null) {
                     dao.insertCrossRef(
                             new ImageKeywordCrossRef(image.id, keywordEntity.id));
+                    embedKeywordsInImage(getApplicationContext(), Uri.parse(uriString), normalized);
                 }
 
             } // end for loop
@@ -420,93 +424,146 @@ public class AlbumContentsActivity extends AppCompatActivity {
         star3.setImageResource(level >= 3 ? filled : empty);
         star3.setColorFilter(level >= 3 ? gold : white);
     }
-
-    private void writeXmpSidecar(android.content.Context context, Uri imageUri, String keyword) {
+    private void embedKeywordsInImage(android.content.Context context, Uri imageUri, String keyword) {
         try {
+
             String filePath = null;
             android.database.Cursor cursor = context.getContentResolver().query(
                     imageUri,
                     new String[]{ MediaStore.Images.Media.DATA },
-                    null, null, null
-            );
+                    null, null, null);
             if (cursor != null) {
-                if (cursor.moveToFirst()) {
-                    filePath = cursor.getString(0);
-                }
+                if (cursor.moveToFirst()) filePath = cursor.getString(0);
                 cursor.close();
             }
-
             if (filePath == null) return;
 
-            String xmpPath = filePath.replaceAll("\\.[^.]+$", ".xmp");
-            java.io.File xmpFile = new java.io.File(xmpPath);
+            java.io.File imageFile = new java.io.File(filePath);
+            byte[] imageBytes = java.nio.file.Files.readAllBytes(imageFile.toPath());
+
+            boolean isJpeg = imageBytes.length >= 2 && (imageBytes[0] & 0xFF) == 0xFF && (imageBytes[1] & 0xFF) == 0xD8;
+            boolean isPng = imageBytes.length >= 4 && (imageBytes[0] & 0xFF) == 0x89 && (imageBytes[1] & 0xFF) == 0x50;
+
+            if (!isJpeg && !isPng) {
+                return;
+            }
+
+            if (isPng) {
+                return;
+            }
+
+            byte[] xmpNs = "http://ns.adobe.com/xap/1.0/\0".getBytes("UTF-8");
 
             List<String> existingKeywords = new ArrayList<>();
-            if (xmpFile.exists()) {
-                String existing = new String(
-                        java.nio.file.Files.readAllBytes(xmpFile.toPath()));
-                java.util.regex.Matcher m = java.util.regex.Pattern
-                        .compile("<rdf:li>(.+?)</rdf:li>")
-                        .matcher(existing);
-                while (m.find()) {
-                    existingKeywords.add(m.group(1).trim());
+            java.io.ByteArrayOutputStream cleanStream = new java.io.ByteArrayOutputStream();
+
+            // Write SOI
+            cleanStream.write(imageBytes, 0, 2);
+            int i = 2;
+
+            while (i + 3 < imageBytes.length) {
+                // Skip padding bytes
+                while (i < imageBytes.length && (imageBytes[i] & 0xFF) == 0xFF) i++;
+                if (i >= imageBytes.length) break;
+
+                int marker = imageBytes[i] & 0xFF;
+                i--; // back up to FF
+
+                // SOS or EOI — write everything remaining and stop
+                if (marker == 0xDA || marker == 0xD9) {
+                    cleanStream.write(imageBytes, i, imageBytes.length - i);
+                    break;
                 }
+
+                // Read segment length
+                int segLen = ((imageBytes[i+2] & 0xFF) << 8) | (imageBytes[i+3] & 0xFF);
+                int segTotal = 2 + segLen; // marker(2) not included in segLen
+                int segEnd = i + segTotal;
+
+                if (segEnd > imageBytes.length) {
+                    // Malformed segment — write rest and bail
+                    cleanStream.write(imageBytes, i, imageBytes.length - i);
+                    break;
+                }
+
+                // Check if APP1 XMP
+                boolean isXmpApp1 = false;
+                if (marker == 0xE1 && segLen > xmpNs.length + 2) {
+                    isXmpApp1 = true;
+                    for (int j = 0; j < xmpNs.length; j++) {
+                        if (i + 4 + j >= imageBytes.length || imageBytes[i + 4 + j] != xmpNs[j]) {
+                            isXmpApp1 = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (isXmpApp1) {
+                    // Extract existing keywords
+                    int dataStart = i + 4 + xmpNs.length;
+                    if (dataStart < segEnd) {
+                        String segStr = new String(imageBytes, dataStart, segEnd - dataStart, "UTF-8");
+                        java.util.regex.Matcher m = java.util.regex.Pattern
+                                .compile("<rdf:li>(.+?)</rdf:li>")
+                                .matcher(segStr);
+                        while (m.find()) {
+                            String kw = m.group(1).trim();
+                            if (!existingKeywords.contains(kw)) existingKeywords.add(kw);
+                        }
+                    }
+                    // Skip — don't copy to clean stream
+                } else {
+                    cleanStream.write(imageBytes, i, segTotal);
+                }
+
+                i = segEnd;
             }
 
-            if (!existingKeywords.contains(keyword)) {
-                existingKeywords.add(keyword);
-            }
+            byte[] cleanBytes = cleanStream.toByteArray();
 
+            // Add new keyword
+            if (!existingKeywords.contains(keyword)) existingKeywords.add(keyword);
+
+            // Build XMP
             StringBuilder items = new StringBuilder();
             for (String kw : existingKeywords) {
-                items.append("        <rdf:li>").append(kw).append("</rdf:li>\n");
+                items.append("<rdf:li>").append(kw).append("</rdf:li>");
             }
 
-            String xmp =
-                    "<?xpacket begin='' id='W5M0MpCehiHzreSzNTczkc9d'?>\n" +
-                            "<x:xmpmeta xmlns:x='adobe:ns:meta/'>\n" +
-                            "  <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>\n" +
-                            "    <rdf:Description rdf:about=''\n" +
-                            "        xmlns:dc='http://purl.org/dc/elements/1.1/'>\n" +
-                            "      <dc:subject>\n" +
-                            "        <rdf:Bag>\n" +
-                            items +
-                            "        </rdf:Bag>\n" +
-                            "      </dc:subject>\n" +
-                            "    </rdf:Description>\n" +
-                            "  </rdf:RDF>\n" +
-                            "</x:xmpmeta>\n" +
+            String xmpStr =
+                    "<?xpacket begin='\uFEFF' id='W5M0MpCehiHzreSzNTczkc9d'?>" +
+                            "<x:xmpmeta xmlns:x='adobe:ns:meta/'>" +
+                            "<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>" +
+                            "<rdf:Description rdf:about='' xmlns:dc='http://purl.org/dc/elements/1.1/'>" +
+                            "<dc:subject><rdf:Bag>" + items + "</rdf:Bag></dc:subject>" +
+                            "</rdf:Description></rdf:RDF></x:xmpmeta>" +
                             "<?xpacket end='w'?>";
 
-            java.io.FileWriter writer = new java.io.FileWriter(xmpFile, false);
-            writer.write(xmp);
-            writer.close();
+            byte[] xmpData = xmpStr.getBytes("UTF-8");
+            int segmentLength = 2 + xmpNs.length + xmpData.length;
 
-        } catch (Exception ignored) {}
-    }
+            java.io.ByteArrayOutputStream xmpSegment = new java.io.ByteArrayOutputStream();
+            xmpSegment.write(0xFF);
+            xmpSegment.write(0xE1);
+            xmpSegment.write((segmentLength >> 8) & 0xFF);
+            xmpSegment.write(segmentLength & 0xFF);
+            xmpSegment.write(xmpNs);
+            xmpSegment.write(xmpData);
 
-    private void insertDateHeaders() {
+            // Write: SOI(2) + XMP segment + rest of clean bytes after SOI
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(imageFile);
+            fos.write(cleanBytes, 0, 2);
+            fos.write(xmpSegment.toByteArray());
+            fos.write(cleanBytes, 2, cleanBytes.length - 2);
+            fos.close();
 
-        java.util.List<ImageItem> withHeaders = new java.util.ArrayList<>();
-        String lastLabel = null;
-        java.text.SimpleDateFormat sdf =
-                new java.text.SimpleDateFormat("MMMM  yyyy", java.util.Locale.getDefault());
+            // Verify
+            byte[] verify = java.nio.file.Files.readAllBytes(imageFile.toPath());
+            boolean found = new String(verify, "UTF-8").contains(keyword);
 
-        for (ImageItem item : images) {
-            String label = item.dateTaken > 0
-                    ? sdf.format(new java.util.Date(item.dateTaken))
-                    : "Unknown Date";
-            if (!label.equals(lastLabel)) {
-                withHeaders.add(ImageItem.asHeader(label));
-                lastLabel = label;
-            }
-            withHeaders.add(item);
+        } catch (Exception e) {
         }
-
-        images.clear();
-        images.addAll(withHeaders);
     }
-
     @Override
     public boolean onCreateOptionsMenu(android.view.Menu menu) {
         getMenuInflater().inflate(R.menu.menu_album_contents, menu);
@@ -675,6 +732,28 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 })
                 .show();
     }
+    private void insertDateHeaders() {
+        java.util.List<ImageItem> withHeaders = new java.util.ArrayList<>();
+        String lastLabel = null;
+        java.text.SimpleDateFormat sdf =
+                new java.text.SimpleDateFormat("MMMM  yyyy", java.util.Locale.getDefault());
+
+        for (ImageItem item : images) {
+            String label = item.dateTaken > 0
+                    ? sdf.format(new java.util.Date(item.dateTaken))
+                    : "Unknown Date";
+            if (!label.equals(lastLabel)) {
+                withHeaders.add(ImageItem.asHeader(label));
+                lastLabel = label;
+            }
+            withHeaders.add(item);
+        }
+
+        images.clear();
+        images.addAll(withHeaders);
+    }
+
+
 
     private void selectAllAndTag(String keyword, int rating) {
         for (ImageItem item : images) {

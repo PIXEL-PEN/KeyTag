@@ -124,8 +124,6 @@ public class MainActivity extends AppCompatActivity {
                 loadAlbums();
             }
         } else {
-
-
             if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
                     != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(
@@ -136,6 +134,8 @@ public class MainActivity extends AppCompatActivity {
                 loadAlbums();
             }
         }
+
+        requestManageStoragePermission();
     }
 
 
@@ -619,6 +619,25 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+    }
+
+
+    private void requestManageStoragePermission() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            if (!android.os.Environment.isExternalStorageManager()) {
+                new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                        .setTitle("Storage Access Required")
+                        .setMessage("KeyTag needs full storage access to write keyword metadata alongside your images. This allows keywords to travel with your photos when moved to other devices or applications.\n\nTap OK to grant access in Settings.")
+                        .setPositiveButton("OK", (dialog, which) -> {
+                            android.content.Intent intent = new android.content.Intent(
+                                    android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+                                    android.net.Uri.parse("package:" + getPackageName()));
+                            startActivity(intent);
+                        })
+                        .setNegativeButton("Skip", null)
+                        .show();
+            }
+        }
     }
 
     private void showManageFoldersDialog() {
