@@ -18,7 +18,15 @@
     <style name="KeyTag_AutoComplete" parent="Widget.AppCompat.AutoCompleteTextView">
         <item name="android:textColor">#FFFFFF</item>
         <item name="android:textColorHint">#88FFFFFF</item>
-        <item name="android:popupBackground">#3D5166</item>    </style>
+        <item name="android:popupBackground">#3D5166</item>
+
+    </style>
+
+    <style name="Theme.KeyTag.Dialog" parent="Theme.MaterialComponents.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">true</item>
+    </style>
+
 
 
 </resources>

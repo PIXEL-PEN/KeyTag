@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="12dp"
+    android:gravity="center">
+
+    <ImageButton
+        android:id="@+id/widgetSearchButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/ic_menu_search"
+        android:background="@android:color/transparent"
+        android:tint="#FFC107"/>
+
+    <TextView
+        android:id="@+id/widgetSearchHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="KeyTag"
+        android:textColor="#FFFFFF"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:layout_marginTop="-2dp"
+        android:includeFontPadding="false"/>
+
+</LinearLayout>
