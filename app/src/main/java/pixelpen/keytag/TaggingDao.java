@@ -118,7 +118,10 @@ public interface TaggingDao {
     @Query("SELECT i.uri FROM images i " +
             "INNER JOIN image_keywords ik ON i.id = ik.imageId " +
             "INNER JOIN keywords k ON k.id = ik.keywordId " +
-            "WHERE k.name = :keyword")
+            "WHERE k.name = :keyword " +
+            "OR k.name LIKE :keyword || ', %' " +
+            "OR k.name LIKE '%, ' || :keyword " +
+            "OR k.name LIKE '%, ' || :keyword || ', %'")
     List<String> getImageUrisForKeyword(String keyword);
 
     @Query("SELECT COUNT(*) FROM image_keywords WHERE keywordId = :keywordId")

@@ -326,7 +326,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 android.view.WindowManager.LayoutParams.MATCH_PARENT,
                 android.view.WindowManager.LayoutParams.WRAP_CONTENT);
     }
-
     private void applyMetadataToSelected(String keyword, int rating) {
 
         final String normalized = keyword == null ? "" : keyword.trim().toLowerCase();
@@ -335,19 +334,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             TaggingDao dao = db.taggingDao();
-
-            KeywordEntity keywordEntity = null;
-
-            if (!normalized.isEmpty()) {
-                keywordEntity = dao.getKeywordByName(normalized);
-                if (keywordEntity == null) {
-                    dao.insertKeyword(new KeywordEntity(normalized, 0));
-                    keywordEntity = dao.getKeywordByName(normalized);
-                }
-
-
-
-            }
 
             for (ImageItem item : images) {
 
@@ -383,17 +369,26 @@ public class AlbumContentsActivity extends AppCompatActivity {
                     dao.updateQuality(uriString, rating);
                 }
 
-                if (keywordEntity != null) {
-                    dao.insertCrossRef(
-                            new ImageKeywordCrossRef(image.id, keywordEntity.id));
+                // Split on comma, store each keyword individually
+                if (!normalized.isEmpty()) {
+                    String[] parts = normalized.split(",");
+                    for (String part : parts) {
+                        String trimmed = part.trim();
+                        if (trimmed.isEmpty()) continue;
+                        KeywordEntity ke = dao.getKeywordByName(trimmed);
+                        if (ke == null) {
+                            dao.insertKeyword(new KeywordEntity(trimmed, 0));
+                            ke = dao.getKeywordByName(trimmed);
+                        }
+                        if (ke != null) {
+                            dao.insertCrossRef(new ImageKeywordCrossRef(image.id, ke.id));
+                            dao.incrementUsage(ke.id);
+                        }
+                    }
                     embedKeywordsInImage(getApplicationContext(), Uri.parse(uriString), normalized);
                 }
 
             } // end for loop
-
-            if (keywordEntity != null) {
-                dao.incrementUsage(keywordEntity.id);
-            }
 
             runOnUiThread(() -> {
                 adapter.clearSelection();
@@ -405,7 +400,6 @@ public class AlbumContentsActivity extends AppCompatActivity {
 
         }).start();
     }
-
     private void updateDialogStars(android.view.View dialogView, int level) {
 
         ImageView star1 = dialogView.findViewById(R.id.dialogStar1);
