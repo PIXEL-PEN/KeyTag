@@ -2,9 +2,9 @@
 
 # KeyTag
 
-**Batch keyword tagging for Android — this does not exist anywhere else.**
+**Batch keyword tagging for Android **
 
-Every desktop DAM has it. Lightroom has it. Capture One has it. No Android gallery app has it. KeyTag fills that gap.
+Every desktop DAM has it. Lightroom has it. Capture One has it. Until recently, no Android gallery app has it. KeyTag fills that gap.
 
 Select any number of images in your native gallery. Tap Share → KeyTag. Type a keyword. Tap Apply. Every selected image is tagged instantly — one action, any number of photos.
 
