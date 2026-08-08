@@ -173,5 +173,6 @@ public interface TaggingDao {
     @Query("SELECT COUNT(*) FROM image_keywords WHERE keywordId = :keywordId")
     int getImageCountForKeyword(long keywordId);
 
-
+    @Query("SELECT imageId FROM image_keywords WHERE keywordId = :keywordId")
+    List<Long> getImageIdsForKeyword(long keywordId);
 }

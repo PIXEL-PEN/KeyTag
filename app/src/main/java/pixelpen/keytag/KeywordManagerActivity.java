@@ -22,6 +22,7 @@ import java.util.List;
 import pixelpen.keytag.db.AppDatabase;
 import pixelpen.keytag.db.KeywordEntity;
 import pixelpen.keytag.db.TaggingDao;
+import pixelpen.keytag.db.ImageKeywordCrossRef;
 
 public class KeywordManagerActivity extends AppCompatActivity {
 
@@ -61,6 +62,10 @@ public class KeywordManagerActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
+
+
+
+
         if (item.getItemId() == R.id.action_sort_keywords) {
             sortByCount = !sortByCount;
             item.setTitle(sortByCount ? "Sort A-Z" : "Sort by Count");
@@ -68,6 +73,9 @@ public class KeywordManagerActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+
+
+
     }
 
     private void loadKeywords() {
@@ -148,6 +156,62 @@ public class KeywordManagerActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void showFixLegacyDialog() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Fix Legacy Keywords")
+                .setMessage("This will split all comma-separated keywords into individual searchable keywords. Run once. Cannot be undone.")
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Fix Now", (dialog, which) -> fixLegacyKeywords())
+                .show();
+    }
+
+    private void fixLegacyKeywords() {
+        new Thread(() -> {
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            TaggingDao dao = db.taggingDao();
+
+            List<KeywordEntity> allKeywords = dao.getAllKeywords();
+
+            for (KeywordEntity kw : allKeywords) {
+                if (!kw.name.contains(",")) continue;
+
+                List<Long> imageIds = dao.getImageIdsForKeyword(kw.id);
+
+                String[] parts = kw.name.split(",");
+                List<String> newKeywords = new ArrayList<>();
+                for (String part : parts) {
+                    String trimmed = part.trim();
+                    if (!trimmed.isEmpty()) newKeywords.add(trimmed);
+                }
+
+                for (long imageId : imageIds) {
+                    for (String newKw : newKeywords) {
+                        KeywordEntity existing = dao.getKeywordByName(newKw);
+                        if (existing == null) {
+                            dao.insertKeyword(new KeywordEntity(newKw, 0));
+                            existing = dao.getKeywordByName(newKw);
+                        }
+                        if (existing != null) {
+                            dao.insertCrossRef(
+                                    new ImageKeywordCrossRef(imageId, existing.id));
+                            dao.incrementUsage(existing.id);
+                        }
+                    }
+                    dao.removeCrossRef(imageId, kw.id);
+                }
+
+                dao.deleteKeywordById(kw.id);
+            }
+
+            runOnUiThread(() -> {
+                android.widget.Toast.makeText(this,
+                        "Legacy keywords fixed",
+                        android.widget.Toast.LENGTH_SHORT).show();
+                loadKeywords();
+            });
+        }).start();
+    }
+
     static class KeywordAdapter extends RecyclerView.Adapter<KeywordAdapter.VH> {
 
         interface OnKeywordClick { void onClick(KeywordEntity keyword); }
@@ -187,5 +251,4 @@ public class KeywordManagerActivity extends AppCompatActivity {
                 textCount = v.findViewById(R.id.textCount);
             }
         }
-    }
-}
+    }}
