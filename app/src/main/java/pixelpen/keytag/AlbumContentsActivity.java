@@ -155,8 +155,16 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 toolbar.setNavigationIcon(android.R.drawable.ic_menu_close_clear_cancel);
                 toolbar.setNavigationOnClickListener(v -> adapter.clearSelection());
 
-                toolbar.getMenu().add("TAG")
-                        .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                android.view.MenuItem tagItem = toolbar.getMenu().add("TAG");
+                tagItem.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+                android.widget.TextView tagView = new android.widget.TextView(this);
+                tagView.setText("TAG");
+                tagView.setTextColor(android.graphics.Color.parseColor("#FFC107"));
+                tagView.setTextSize(16);
+                tagView.setTypeface(null, android.graphics.Typeface.BOLD);
+                tagView.setPadding(8, 0, 8, 0);
+                tagItem.setActionView(tagView);
+                tagView.setOnClickListener(v -> showBatchTagDialog());
 
                 toolbar.setOnMenuItemClickListener(item -> {
                     showBatchTagDialog();
