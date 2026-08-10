@@ -153,6 +153,18 @@ public class ImageViewerActivity extends AppCompatActivity {
             startActivity(viewIntent);
         });
 
+        ImageView btnTag = findViewById(R.id.btnTag);
+        btnTag.setOnClickListener(v -> {
+            if (imageList == null || imageList.isEmpty()) return;
+            int position = viewPager.getCurrentItem();
+            if (position < 0 || position >= imageList.size()) return;
+            String currentUri = imageList.get(position);
+            showSingleImageTagDialog(currentUri);
+        });
+
+
+
+
         LinearLayout starContainer = findViewById(R.id.starContainer);
 
         starContainer.setOnClickListener(v -> {
@@ -1042,7 +1054,250 @@ public class ImageViewerActivity extends AppCompatActivity {
         }).start();
     }
 
+    private void showSingleImageTagDialog(String uriString) {
+        android.view.View dialogView = getLayoutInflater()
+                .inflate(R.layout.dialog_batch_tag, null);
 
+        android.widget.AutoCompleteTextView tagInput =
+                dialogView.findViewById(R.id.tagInput);
+
+        final int[] rating = {0};
+        android.view.View ratingRow = dialogView.findViewById(R.id.ratingRow);
+        ratingRow.setOnClickListener(v -> {
+            rating[0] = (rating[0] + 1) % 4;
+            updateDialogStars(dialogView, rating[0]);
+        });
+
+        new Thread(() -> {
+            pixelpen.keytag.db.AppDatabase db =
+                    pixelpen.keytag.db.AppDatabase.getInstance(getApplicationContext());
+            pixelpen.keytag.db.TaggingDao dao = db.taggingDao();
+            java.util.List<String> keywords = dao.getAllKeywordNames();
+            runOnUiThread(() -> {
+                android.widget.ArrayAdapter<String> adapter =
+                        new android.widget.ArrayAdapter<>(this,
+                                R.layout.item_dropdown, keywords);
+                tagInput.setAdapter(adapter);
+            });
+        }).start();
+
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(
+                this, R.style.ThemeOverlay_KeyTag_Dialog)
+                .setTitle("Tag this image")
+                .setView(dialogView)
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Apply", (dialog, which) -> {
+                    String keyword = tagInput.getText().toString().trim();
+                    if (!keyword.isEmpty()) {
+                        applyTagToSingleImage(uriString, keyword, rating[0]);
+                    }
+                })
+                .show();
+    }
+
+    private void applyTagToSingleImage(String uriString, String keyword, int rating) {
+        new Thread(() -> {
+            pixelpen.keytag.db.AppDatabase db =
+                    pixelpen.keytag.db.AppDatabase.getInstance(getApplicationContext());
+            pixelpen.keytag.db.TaggingDao dao = db.taggingDao();
+
+            android.net.Uri uri = android.net.Uri.parse(uriString);
+            long mediaId = pixelpen.keytag.util.MediaStoreUtil.getMediaStoreId(
+                    getApplicationContext(), uri);
+
+            pixelpen.keytag.db.ImageEntity image = null;
+            if (mediaId != -1) image = dao.getImageByMediaStoreId(mediaId);
+            if (image == null) image = dao.getImageByUri(uriString);
+            if (image == null) {
+                dao.insertImage(new pixelpen.keytag.db.ImageEntity(
+                        uriString, System.currentTimeMillis()));
+                if (mediaId != -1) {
+                    dao.updateMediaStoreId(uriString, mediaId);
+                    image = dao.getImageByMediaStoreId(mediaId);
+                } else {
+                    image = dao.getImageByUri(uriString);
+                }
+            }
+            if (image == null) return;
+
+            if (rating > 0) {
+                if (mediaId != -1) dao.updateQualityByMediaStoreId(mediaId, rating);
+                else dao.updateQuality(uriString, rating);
+            }
+
+            final String normalized = keyword.trim().toLowerCase();
+            final pixelpen.keytag.db.ImageEntity finalImage = image;
+            String[] parts = normalized.split(",");
+            for (String part : parts) {
+                String trimmed = part.trim();
+                if (trimmed.isEmpty()) continue;
+                pixelpen.keytag.db.KeywordEntity ke = dao.getKeywordByName(trimmed);
+                if (ke == null) {
+                    dao.insertKeyword(new pixelpen.keytag.db.KeywordEntity(trimmed, 0));
+                    ke = dao.getKeywordByName(trimmed);
+                }
+                if (ke != null) {
+                    dao.insertCrossRef(new pixelpen.keytag.db.ImageKeywordCrossRef(
+                            finalImage.id, ke.id));
+                    dao.incrementUsage(ke.id);
+                }
+            }
+
+            // Embed in image
+            embedKeywordsInImage(getApplicationContext(), uri, normalized);
+
+            runOnUiThread(() -> {
+                loadKeywordsForImage(uriString);
+                android.widget.Toast.makeText(this, "Tagged",
+                        android.widget.Toast.LENGTH_SHORT).show();
+            });
+        }).start();
+    }
+
+
+    private void updateDialogStars(android.view.View dialogView, int level) {
+        android.widget.ImageView star1 = dialogView.findViewById(R.id.dialogStar1);
+        android.widget.ImageView star2 = dialogView.findViewById(R.id.dialogStar2);
+        android.widget.ImageView star3 = dialogView.findViewById(R.id.dialogStar3);
+
+        int filled = R.drawable.baseline_star_24;
+        int empty  = R.drawable.baseline_star_border_24;
+        int gold   = android.graphics.Color.parseColor("#FFC107");
+        int white  = android.graphics.Color.WHITE;
+
+        star1.setImageResource(level >= 1 ? filled : empty);
+        star1.setColorFilter(level >= 1 ? gold : white);
+        star2.setImageResource(level >= 2 ? filled : empty);
+        star2.setColorFilter(level >= 2 ? gold : white);
+        star3.setImageResource(level >= 3 ? filled : empty);
+        star3.setColorFilter(level >= 3 ? gold : white);
+    }
+
+
+    private void embedKeywordsInImage(android.content.Context context, android.net.Uri imageUri, String keyword) {
+        try {
+            String filePath = null;
+            android.database.Cursor cursor = context.getContentResolver().query(
+                    imageUri,
+                    new String[]{ android.provider.MediaStore.Images.Media.DATA },
+                    null, null, null);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) filePath = cursor.getString(0);
+                cursor.close();
+            }
+            if (filePath == null) return;
+
+            java.io.File imageFile = new java.io.File(filePath);
+            byte[] imageBytes = java.nio.file.Files.readAllBytes(imageFile.toPath());
+
+            if (imageBytes.length < 2 || (imageBytes[0] & 0xFF) != 0xFF || (imageBytes[1] & 0xFF) != 0xD8) {
+                return;
+            }
+
+            byte[] xmpNs = "http://ns.adobe.com/xap/1.0/\0".getBytes("UTF-8");
+
+            java.util.List<String> existingKeywords = new java.util.ArrayList<>();
+            java.io.ByteArrayOutputStream cleanStream = new java.io.ByteArrayOutputStream();
+
+            cleanStream.write(imageBytes, 0, 2);
+            int i = 2;
+
+            while (i + 3 < imageBytes.length) {
+                while (i < imageBytes.length && (imageBytes[i] & 0xFF) == 0xFF) i++;
+                if (i >= imageBytes.length) break;
+
+                int marker = imageBytes[i] & 0xFF;
+                i--;
+
+                if (marker == 0xDA || marker == 0xD9) {
+                    cleanStream.write(imageBytes, i, imageBytes.length - i);
+                    break;
+                }
+
+                int segLen = ((imageBytes[i+2] & 0xFF) << 8) | (imageBytes[i+3] & 0xFF);
+                int segTotal = 2 + segLen;
+                int segEnd = i + segTotal;
+
+                if (segEnd > imageBytes.length) {
+                    cleanStream.write(imageBytes, i, imageBytes.length - i);
+                    break;
+                }
+
+                boolean isXmpApp1 = false;
+                if (marker == 0xE1 && segLen > xmpNs.length + 2) {
+                    isXmpApp1 = true;
+                    for (int j = 0; j < xmpNs.length; j++) {
+                        if (i + 4 + j >= imageBytes.length || imageBytes[i + 4 + j] != xmpNs[j]) {
+                            isXmpApp1 = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (isXmpApp1) {
+                    int dataStart = i + 4 + xmpNs.length;
+                    if (dataStart < segEnd) {
+                        String segStr = new String(imageBytes, dataStart, segEnd - dataStart, "UTF-8");
+                        java.util.regex.Matcher m = java.util.regex.Pattern
+                                .compile("<rdf:li>(.+?)</rdf:li>")
+                                .matcher(segStr);
+                        while (m.find()) {
+                            String kw = m.group(1).trim();
+                            if (!existingKeywords.contains(kw)) existingKeywords.add(kw);
+                        }
+                    }
+                } else {
+                    cleanStream.write(imageBytes, i, segTotal);
+                }
+                i = segEnd;
+            }
+
+            byte[] cleanBytes = cleanStream.toByteArray();
+
+            // Add new keywords
+            String[] parts = keyword.split(",");
+            for (String part : parts) {
+                String trimmed = part.trim();
+                if (!trimmed.isEmpty() && !existingKeywords.contains(trimmed)) {
+                    existingKeywords.add(trimmed);
+                }
+            }
+
+            StringBuilder items = new StringBuilder();
+            for (String kw : existingKeywords) {
+                items.append("<rdf:li>").append(kw).append("</rdf:li>");
+            }
+
+            String xmpStr =
+                    "<?xpacket begin='\uFEFF' id='W5M0MpCehiHzreSzNTczkc9d'?>" +
+                            "<x:xmpmeta xmlns:x='adobe:ns:meta/'>" +
+                            "<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>" +
+                            "<rdf:Description rdf:about='' xmlns:dc='http://purl.org/dc/elements/1.1/'>" +
+                            "<dc:subject><rdf:Bag>" + items + "</rdf:Bag></dc:subject>" +
+                            "</rdf:Description></rdf:RDF></x:xmpmeta>" +
+                            "<?xpacket end='w'?>";
+
+            byte[] xmpData = xmpStr.getBytes("UTF-8");
+            int segmentLength = 2 + xmpNs.length + xmpData.length;
+
+            java.io.ByteArrayOutputStream xmpSegment = new java.io.ByteArrayOutputStream();
+            xmpSegment.write(0xFF);
+            xmpSegment.write(0xE1);
+            xmpSegment.write((segmentLength >> 8) & 0xFF);
+            xmpSegment.write(segmentLength & 0xFF);
+            xmpSegment.write(xmpNs);
+            xmpSegment.write(xmpData);
+
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(imageFile);
+            fos.write(cleanBytes, 0, 2);
+            fos.write(xmpSegment.toByteArray());
+            fos.write(cleanBytes, 2, cleanBytes.length - 2);
+            fos.close();
+
+        } catch (Exception e) {
+            android.util.Log.d("XMP_DEBUG", "Embed FAILED: " + e.getMessage());
+        }
+    }
 
     @Override
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {
