@@ -56,8 +56,8 @@ public class WidgetSearchActivity extends Activity {
                 Intent intent = new Intent(this, AlbumContentsActivity.class);
                 intent.putStringArrayListExtra(
                         "search_results", new ArrayList<>(uris));
-                intent.putExtra("bucket_name", "Results: " + keyword);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                intent.putExtra("bucket_name", "Results");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
                 finish();
             });

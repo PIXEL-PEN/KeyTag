@@ -107,7 +107,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
         ArrayList<String> searchUris =
                 getIntent().getStringArrayListExtra("search_results");
 
-        shareMode = getIntent().getBooleanExtra("share_mode", false);
+
 
         getWindow().setDecorFitsSystemWindows(true);
         setContentView(R.layout.activity_album_contents);
@@ -115,9 +115,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
         long bucketId = getIntent().getLongExtra("bucket_id", -1);
         bucketName = getIntent().getStringExtra("bucket_name");
         MaterialToolbar toolbar = findViewById(R.id.topBar);
-        toolbar.setTitle(bucketName);
         setSupportActionBar(toolbar);
-
+        toolbar.setTitle(bucketName);
         recyclerView = findViewById(R.id.recycler_view);
         layoutManager = new GridLayoutManager(this, spanCount);
         layoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
@@ -172,7 +171,8 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 });
 
             } else {
-                toolbar.setTitle(bucketName);
+                boolean isSearch = getIntent().getStringArrayListExtra("search_results") != null;
+                toolbar.setTitle(isSearch ? "Results (" + images.size() + ")" : bucketName);
                 toolbar.setNavigationIcon(null);
             }
 
@@ -181,12 +181,22 @@ public class AlbumContentsActivity extends AppCompatActivity {
         recyclerView.setAdapter(adapter);
         recyclerView.setHasFixedSize(true);
 
+        if (searchUris != null) {
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setTitle("Results (" + images.size() + ")");
+            } else {
+                toolbar.setTitle("Results (" + images.size() + ")");
+            }
+        }
+
         if (shareMode && searchUris != null && !searchUris.isEmpty()) {
             recyclerView.post(() -> {
                 adapter.selectAll();
                 showBatchTagDialog();
             });
         }
+
+
 
         ScaleGestureDetector scaleDetector =
                 new ScaleGestureDetector(this,
@@ -279,10 +289,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
             images.add(item);
         }
 
-        MaterialToolbar toolbar = findViewById(R.id.topBar);
-        if (toolbar != null) {
-            toolbar.setTitle("Results (" + images.size() + ")");
-        }
+
     }
 
     private void showBatchTagDialog() {
@@ -670,7 +677,7 @@ public class AlbumContentsActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, AlbumContentsActivity.class);
                 intent.putStringArrayListExtra(
                         "search_results", new ArrayList<>(uris));
-                intent.putExtra("bucket_name", "Search Results");
+                intent.putExtra("bucket_name", "Results");
                 startActivity(intent);
             });
         }).start();
